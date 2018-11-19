@@ -1,0 +1,55 @@
+{
+  "name": "@gnosis.pm/pm-markets",
+  "version": "1.0.0",
+  "description": "Collection of Market Makers for the Gnosis prediction market platform",
+  "scripts": {
+    "lint": "eslint .",
+    "develop": "truffle develop",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "networks": "truffle networks",
+    "test": "truffle test",
+    "lint-contracts": "solhint contracts/**/*.sol",
+    "injectnetinfo": "tnt iN",
+    "extractnetinfo": "tnt eN",
+    "resetnetinfo": "truffle networks --clean && tnt iN",
+    "measuregasstats": "tnt measureGas -f inheritanceMap.json -o build/gas-stats.json --test-command 'npm test'",
+    "prepublishOnly": "eslint . && npm run measuregasstats && truffle compile && truffle networks --clean && tnt iN"
+  },
+  "keywords": [
+    "Ethereum",
+    "Gnosis",
+    "Prediction-Market",
+    "Solidity",
+    "Truffle"
+  ],
+  "author": "Gnosis (https://gnosis.pm)",
+  "license": "LGPL-3.0",
+  "dependencies": {
+    "@gnosis.pm/pm-contracts": "2.0.0-alpha.1",
+    "@gnosis.pm/util-contracts": "^2.0.0-alpha",
+    "canonical-weth": "^1.1.0",
+    "openzeppelin-solidity": "github:gnosis/openzeppelin-solidity#fix-signed-safemath"
+  },
+  "devDependencies": {
+    "@digix/tempo": "^0.2.0",
+    "@gnosis.pm/truffle-nice-tools": "^1.1.3",
+    "babel-eslint": "^8.0.2",
+    "decimal.js": "^10.0.1",
+    "eslint": "^4.11.0",
+    "eslint-plugin-babel": "^5.1.0",
+    "lodash": "^4.17.4",
+    "npm-prepublish": "^1.2.3",
+    "solhint": "^1.1.10",
+    "truffle": "^4.0.4",
+    "web3": "^1.0.0-beta.35"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gnosis/gnosis-contracts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gnosis/gnosis-contracts/issues"
+  },
+  "homepage": "https://github.com/gnosis/gnosis-contracts#readme"
+}
