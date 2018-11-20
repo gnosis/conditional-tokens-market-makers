@@ -1,11 +1,13 @@
 pragma solidity ^0.4.24;
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@gnosis.pm/util-contracts/contracts/Fixed192x64Math.sol";
+import "@gnosis.pm/pm-contracts/contracts/PredictionMarketSystem.sol";
 import "./MarketMaker.sol";
-import "../Events/EventManager.sol";
 
 /// @title LMSR market maker contract - Calculates share prices based on share distribution and initial funding
 /// @author Alan Lu - <alan.lu@gnosis.pm>
 contract LMSRMarketMaker is MarketMaker {
+    using SafeMath for uint;
 
     /*
      *  Constants
@@ -13,9 +15,11 @@ contract LMSRMarketMaker is MarketMaker {
     uint constant ONE = 0x10000000000000000;
     int constant EXP_LIMIT = 3394200909562557497344;
 
-    constructor(EventManager _eventManager, bytes32 _outcomeTokenSetId, uint64 _fee)
-        public MarketMaker(_eventManager, _outcomeTokenSetId, _fee) {}
-    
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee)
+        public
+        MarketMaker(_pmSystem, _collateralToken, _conditionId, _fee) {}
+
+
     /// @dev Calculates the net cost for executing a given trade.
     /// @param outcomeTokenAmounts Amounts of outcome tokens to buy from the market. If an amount is negative, represents an amount to sell to the market.
     /// @return Net cost of trade. If positive, represents amount of collateral which would be paid to the market for the trade. If negative, represents amount of collateral which would be received from the market for the trade.
@@ -24,7 +28,7 @@ contract LMSRMarketMaker is MarketMaker {
         view
         returns (int netCost)
     {
-        require(eventManager.getOutcomeTokenSetLength(outcomeTokenSetId) > 1);
+        require(pmSystem.getOutcomeSlotCount(conditionId) > 1);
         int[] memory netOutcomeTokensSoldCopy = netOutcomeTokensSold;
 
         // Calculate cost level based on net outcome token balances
@@ -59,7 +63,7 @@ contract LMSRMarketMaker is MarketMaker {
         view
         returns (uint price)
     {
-        require(eventManager.getOutcomeTokenSetLength(outcomeTokenSetId) > 1);
+        require(pmSystem.getOutcomeSlotCount(conditionId) > 1);
         int[] memory netOutcomeTokensSoldCopy = netOutcomeTokensSold;
         int logN = Fixed192x64Math.binaryLog(netOutcomeTokensSoldCopy.length * ONE, Fixed192x64Math.EstimationMode.Midpoint);
         // The price function is exp(quantities[i]/b) / sum(exp(q/b) for q in quantities)

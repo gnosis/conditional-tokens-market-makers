@@ -1,23 +1,28 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
+
+// HACK: should be removed along with the hack-ey migration
+// when https://github.com/trufflesuite/truffle/pull/1085 hits
+import "canonical-weth/contracts/WETH9.sol";
+
 
 contract Migrations {
-  address public owner;
-  uint public last_completed_migration;
+    address public owner;
+    uint public lastCompletedMigration;
 
-  constructor() public {
-    owner = msg.sender;
-  }
+    modifier restricted() {
+        if (msg.sender == owner) _;
+    }
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
+    constructor() public {
+        owner = msg.sender;
+    }
 
-  function setCompleted(uint completed) public restricted {
-    last_completed_migration = completed;
-  }
+    function setCompleted(uint completed) public restricted {
+        lastCompletedMigration = completed;
+    }
 
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
-  }
+    function upgrade(address newAddress) public restricted {
+        Migrations upgraded = Migrations(newAddress);
+        upgraded.setCompleted(lastCompletedMigration);
+    }
 }

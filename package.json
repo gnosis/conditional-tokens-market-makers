@@ -26,10 +26,10 @@
   "author": "Gnosis (https://gnosis.pm)",
   "license": "LGPL-3.0",
   "dependencies": {
-    "@gnosis.pm/pm-contracts": "2.0.0-alpha.1",
-    "@gnosis.pm/util-contracts": "^2.0.0-alpha",
+    "@gnosis.pm/pm-contracts": "^2.0.0-alpha.3",
+    "@gnosis.pm/util-contracts": "^2.0.0-alpha.2",
     "canonical-weth": "^1.1.0",
-    "openzeppelin-solidity": "github:gnosis/openzeppelin-solidity#fix-signed-safemath"
+    "openzeppelin-solidity": "^2.0.0"
   },
   "devDependencies": {
     "@digix/tempo": "^0.2.0",

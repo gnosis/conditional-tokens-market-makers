@@ -1,8 +1,11 @@
 pragma solidity ^0.4.24;
-import "../Events/EventManager.sol";
+import "erc-1155/contracts/IERC1155TokenReceiver.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
+import "@gnosis.pm/pm-contracts/contracts/PredictionMarketSystem.sol";
 
-contract MarketMaker is Ownable {
-    using SafeMath for *;
+contract MarketMaker is Ownable, IERC1155TokenReceiver {
+    using SignedSafeMath for int;
     
     /*
      *  Constants
@@ -20,8 +23,10 @@ contract MarketMaker is Ownable {
     /*
      *  Storage
      */
-    EventManager public eventManager;
-    bytes32 public outcomeTokenSetId;
+    PredictionMarketSystem public pmSystem;
+    IERC20 public collateralToken;
+    bytes32 public conditionId;
+
     uint64 public fee;
     uint public funding;
     int[] public netOutcomeTokensSold;
@@ -41,20 +46,18 @@ contract MarketMaker is Ownable {
         _;
     }
 
-    constructor(EventManager _eventManager, bytes32 _outcomeTokenSetId, uint64 _fee)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee)
         public
     {
         // Validate inputs
-        require(address(_eventManager) != 0 && _fee < FEE_RANGE);
-        eventManager = _eventManager;
-        outcomeTokenSetId = _outcomeTokenSetId;
+        require(address(_pmSystem) != 0 && _fee < FEE_RANGE);
+        pmSystem = _pmSystem;
+        collateralToken = _collateralToken;
+        conditionId = _conditionId;
 
-        uint outcomeTokenSetLength = eventManager.getOutcomeTokenSetLength(outcomeTokenSetId);
-        require(outcomeTokenSetLength > 0);
-        netOutcomeTokensSold = new int[](outcomeTokenSetLength);
-        for(uint i = 0; i < outcomeTokenSetLength; i++) {
-            eventManager.outcomeTokens(_outcomeTokenSetId, i).approve(_eventManager, 2**256-1);
-        }
+        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
+        require(outcomeSlotCount > 0);
+        netOutcomeTokensSold = new int[](outcomeSlotCount);
 
         fee = _fee;
         stage = Stages.MarketCreated;
@@ -70,9 +73,12 @@ contract MarketMaker is Ownable {
         atStage(Stages.MarketCreated)
     {
         // Request collateral tokens and allow event contract to transfer them to buy all outcomes
-        require(   eventManager.collateralToken().transferFrom(msg.sender, this, _funding)
-                && eventManager.collateralToken().approve(eventManager, _funding));
-        eventManager.mintOutcomeTokenSet(outcomeTokenSetId, _funding);
+        require(   collateralToken.transferFrom(msg.sender, this, _funding)
+                && collateralToken.approve(pmSystem, _funding));
+
+        uint[] memory partition = generateBasicPartition();
+
+        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
         funding = _funding;
         stage = Stages.MarketFunded;
         emit AutomatedMarketMakerFunding(funding);
@@ -84,10 +90,10 @@ contract MarketMaker is Ownable {
         onlyOwner
         atStage(Stages.MarketFunded)
     {
-        uint outcomeCount = eventManager.getOutcomeTokenSetLength(outcomeTokenSetId);
-        for (uint i = 0; i < outcomeCount; i++) {
-            OutcomeToken outcomeToken = eventManager.outcomeTokens(outcomeTokenSetId, i);
-            require(outcomeToken.transfer(owner, outcomeToken.balanceOf(this)));
+        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
+        for (uint i = 0; i < outcomeSlotCount; i++) {
+            uint positionId = generateBasicPositionId(i);
+            pmSystem.safeTransferFrom(this, owner(), positionId, pmSystem.balanceOf(this, positionId), "");
         }
         stage = Stages.MarketClosed;
         emit AutomatedMarketMakerClosing();
@@ -100,9 +106,9 @@ contract MarketMaker is Ownable {
         onlyOwner
         returns (uint fees)
     {
-        fees = eventManager.collateralToken().balanceOf(this);
+        fees = collateralToken.balanceOf(this);
         // Transfer fees
-        require(eventManager.collateralToken().transfer(owner, fees));
+        require(collateralToken.transfer(owner(), fees));
         emit FeeWithdrawal(fees);
     }
 
@@ -115,8 +121,9 @@ contract MarketMaker is Ownable {
         atStage(Stages.MarketFunded)
         returns (int netCost)
     {
-        uint outcomeCount = eventManager.getOutcomeTokenSetLength(outcomeTokenSetId);
-        require(outcomeTokenAmounts.length == outcomeCount);
+        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
+        require(outcomeTokenAmounts.length == outcomeSlotCount);
+        uint[] memory partition = generateBasicPartition();
 
         // Calculate net cost for executing trade
         int outcomeTokenNetCost = calcNetCost(outcomeTokenAmounts);
@@ -134,22 +141,22 @@ contract MarketMaker is Ownable {
             collateralLimit == 0
         );
 
-        ERC20 collateralToken = eventManager.collateralToken();
         if(outcomeTokenNetCost > 0) {
             require(
                 collateralToken.transferFrom(msg.sender, this, uint(netCost)) &&
-                collateralToken.approve(eventManager, uint(outcomeTokenNetCost))
+                collateralToken.approve(pmSystem, uint(outcomeTokenNetCost))
             );
 
-            eventManager.mintOutcomeTokenSet(outcomeTokenSetId, uint(outcomeTokenNetCost));
+            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, uint(outcomeTokenNetCost));
         }
 
-        for (uint i = 0; i < outcomeCount; i++) {
+        for (uint i = 0; i < outcomeSlotCount; i++) {
             if(outcomeTokenAmounts[i] != 0) {
+                uint positionId = generateBasicPositionId(i);
                 if(outcomeTokenAmounts[i] < 0) {
-                    require(eventManager.outcomeTokens(outcomeTokenSetId, i).transferFrom(msg.sender, this, uint(-outcomeTokenAmounts[i])));
+                    pmSystem.safeTransferFrom(msg.sender, this, positionId, uint(-outcomeTokenAmounts[i]), "");
                 } else {
-                    require(eventManager.outcomeTokens(outcomeTokenSetId, i).transfer(msg.sender, uint(outcomeTokenAmounts[i])));
+                    pmSystem.safeTransferFrom(this, msg.sender, positionId, uint(outcomeTokenAmounts[i]), "");
                 }
 
                 netOutcomeTokensSold[i] = netOutcomeTokensSold[i].add(outcomeTokenAmounts[i]);
@@ -160,7 +167,7 @@ contract MarketMaker is Ownable {
             // This is safe since
             // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
             // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
-            eventManager.burnOutcomeTokenSet(outcomeTokenSetId, uint(-outcomeTokenNetCost));
+            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, partition, uint(-outcomeTokenNetCost));
             if(netCost < 0) {
                 require(collateralToken.transfer(msg.sender, uint(-netCost)));
             }
@@ -178,5 +185,35 @@ contract MarketMaker is Ownable {
         returns (uint)
     {
         return outcomeTokenCost * fee / FEE_RANGE;
+    }
+
+    function onERC1155Received(address operator, address /*from*/, uint256 /*id*/, uint256 /*value*/, bytes /*data*/) external returns(bytes4) {
+        if (operator == address(this)) {
+            return 0xf23a6e61;
+        }
+        return 0x0;
+    }
+
+    function generateBasicPartition()
+        private
+        view
+        returns (uint[] partition)
+    {
+        partition = new uint[](pmSystem.getOutcomeSlotCount(conditionId));
+        for(uint i = 0; i < partition.length; i++) {
+            partition[i] = 1 << i;
+        }
+    }
+
+    function generateBasicPositionId(uint i)
+        private
+        view
+        returns (uint)
+    {
+        return uint(keccak256(abi.encodePacked(
+            collateralToken,
+            keccak256(abi.encodePacked(
+                conditionId,
+                1 << i)))));
     }
 }
