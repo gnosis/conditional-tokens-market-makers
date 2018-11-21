@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@gnosis.pm/util-contracts/contracts/Fixed192x64Math.sol";
-import "@gnosis.pm/pm-contracts/contracts/PredictionMarketSystem.sol";
+import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 import "./MarketMaker.sol";
 
 /// @title LMSR market maker contract - Calculates share prices based on share distribution and initial funding

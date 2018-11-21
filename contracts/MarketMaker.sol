@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 import "erc-1155/contracts/IERC1155TokenReceiver.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
-import "@gnosis.pm/pm-contracts/contracts/PredictionMarketSystem.sol";
+import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 
 contract MarketMaker is Ownable, IERC1155TokenReceiver {
     using SignedSafeMath for int;
