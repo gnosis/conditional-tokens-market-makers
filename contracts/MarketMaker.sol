@@ -29,7 +29,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     uint64 public fee;
     uint public funding;
-    int[] public netOutcomeTokensSold;
     Stages public stage;
     enum Stages {
         MarketCreated,
@@ -54,11 +53,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         pmSystem = _pmSystem;
         collateralToken = _collateralToken;
         conditionId = _conditionId;
-
-        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
-        require(outcomeSlotCount > 0);
-        netOutcomeTokensSold = new int[](outcomeSlotCount);
-
         fee = _fee;
         stage = Stages.MarketCreated;
     }
@@ -159,7 +153,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
                     pmSystem.safeTransferFrom(this, msg.sender, positionId, uint(outcomeTokenAmounts[i]), "");
                 }
 
-                netOutcomeTokensSold[i] = netOutcomeTokensSold[i].add(outcomeTokenAmounts[i]);
             }
         }
 
@@ -206,7 +199,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     }
 
     function generateBasicPositionId(uint i)
-        private
+        internal
         view
         returns (uint)
     {
