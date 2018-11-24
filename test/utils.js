@@ -63,14 +63,13 @@ function getBlock(b) {
 }
 
 function lmsrMarginalPrice(funding, netOutcomeTokensSold, outcomeIndex) {
-    const b = Decimal(funding.valueOf()).div(netOutcomeTokensSold.length).ln()
-
-    return Decimal(netOutcomeTokensSold[outcomeIndex].valueOf()).div(b).exp().div(
-        netOutcomeTokensSold.reduce(
-            (acc, tokensSold) => acc.add(Decimal(tokensSold.valueOf()).div(b).exp()),
-            Decimal(0)
-        )
-    ).valueOf()
+    const b = new Decimal(funding.valueOf()).div(Decimal.ln(netOutcomeTokensSold.length))
+    const numerator = new Decimal(netOutcomeTokensSold[outcomeIndex].valueOf()).div(b).exp()
+    const denominator = netOutcomeTokensSold.reduce(
+        (acc, tokensSold) => acc.add(Decimal(tokensSold.valueOf()).div(b).exp()),
+        new Decimal(0)
+    )
+    return numerator.div(denominator).valueOf()
 }
 
 Object.assign(exports, {
