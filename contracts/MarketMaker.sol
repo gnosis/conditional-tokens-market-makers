@@ -1,12 +1,13 @@
 pragma solidity ^0.4.24;
 import "erc-1155/contracts/IERC1155TokenReceiver.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
 import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 
 contract MarketMaker is Ownable, IERC1155TokenReceiver {
     using SignedSafeMath for int;
-    
+    using SafeMath for uint;
     /*
      *  Constants
      */    
@@ -16,9 +17,10 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
      *  Events
      */
     event AutomatedMarketMakerCreated(uint funding);
-    event AutomatedMarketMakerFunded(uint funding);
     event AutomatedMarketMakerPaused();
+    event AutomatedMarketMakerResumed();
     event AutomatedMarketMakerClosed();
+    event MarketFundingChanged(int funding);
     event FeeChanged(uint64 newFee);
     event FeeWithdrawal(uint fees);
     event OutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
@@ -57,13 +59,10 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         collateralToken = _collateralToken;
         conditionId = _conditionId;
         fee = _fee;
-        // Request collateral tokens and allow event contract to transfer them to buy all outcomes
-        require(collateralToken.transferFrom(msg.sender, this, _funding) && collateralToken.approve(pmSystem, _funding));
 
-        // Generate original Outcome Tokens
+        require(collateralToken.transferFrom(msg.sender, this, _funding) && collateralToken.approve(pmSystem, _funding));
         uint[] memory partition = generateBasicPartition();
         pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
-
         funding = _funding;
 
         stage = Stages.MarketCreated;
@@ -74,26 +73,36 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     /// @dev Allows to fund the market with collateral tokens converting them into outcome tokens
     /// @param _funding Funding amount
-    function fund(uint _funding)
+    function changeFunding(int _funding)
         public
+        onlyOwner
+        atStage(Stages.MarketPaused)
     {
-        require(stage == Stages.MarketCreated || stage == Stages.MarketPaused);
-
-        // Request collateral tokens and allow event contract to transfer them to buy all outcomes
-        require(   collateralToken.transferFrom(msg.sender, this, _funding)
-                && collateralToken.approve(pmSystem, _funding));
-
-        uint[] memory partition = generateBasicPartition();
-
-        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
-        funding = _funding;
-        emit AutomatedMarketMakerFunded(funding);
+        // Either add or subtract funding based off whether the _funding parameter is negative or positive
+        if (_funding > 0) {
+            require(collateralToken.transferFrom(msg.sender, this, uint(_funding)) && collateralToken.approve(pmSystem, uint(_funding)));
+            uint[] memory addFundingPartition = generateBasicPartition();
+            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, addFundingPartition, uint(_funding));
+            funding = funding.add(uint(_funding));
+            emit MarketFundingChanged(_funding);
+        }
+        if (_funding < 0) {
+            uint[] memory removeFundingPartition = generateBasicPartition();
+            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, removeFundingPartition, uint(_funding));
+            funding = funding.sub(uint(_funding));
+            require(collateralToken.transfer(owner(), uint(_funding)));
+            emit MarketFundingChanged(_funding);
+        }
     }
 
     function pause() public onlyOwner atStage(Stages.MarketCreated) {
-        require(stage != Stages.MarketPaused || stage != Stages.MarketClosed, "Market is already paused");
         stage = Stages.MarketPaused;
         emit AutomatedMarketMakerPaused();
+    }
+    
+    function resume() public onlyOwner atStage(Stages.MarketPaused) {
+        stage = Stages.MarketCreated;
+        emit AutomatedMarketMakerResumed();
     }
 
     function changeFee(uint64 _fee) onlyOwner atStage(Stages.MarketPaused) {
@@ -106,7 +115,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         public
         onlyOwner
     {
-        require(stage == Stages.MarketClosed || stage == Stages.MarketPaused, "The market has already been closed");
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
         for (uint i = 0; i < outcomeSlotCount; i++) {
             uint positionId = generateBasicPositionId(i);
@@ -205,6 +213,13 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     function onERC1155Received(address operator, address /*from*/, uint256 /*id*/, uint256 /*value*/, bytes /*data*/) external returns(bytes4) {
         if (operator == address(this)) {
+            return 0xf23a6e61;
+        }
+        return 0x0;
+    }
+
+    function onERC1155BatchReceived(address _operator, address _from, uint256[] _ids, uint256[] _values, bytes _data) external returns(bytes4) {
+        if (_operator == address(this)) {
             return 0xf23a6e61;
         }
         return 0x0;
