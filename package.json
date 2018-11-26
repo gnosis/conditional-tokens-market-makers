@@ -41,7 +41,7 @@
     "lodash": "^4.17.4",
     "npm-prepublish": "^1.2.3",
     "solhint": "^1.1.10",
-    "truffle": "^4.0.4",
+    "truffle": "^5.0.0-beta.2",
     "web3": "^1.0.0-beta.35"
   },
   "repository": {
