@@ -1,61 +1,57 @@
 const _ = require('lodash')
-const testGas = require('@gnosis.pm/truffle-nice-tools').testGas
+const rlp = require('rlp')
 const { wait } = require('@digix/tempo')(web3)
 
 const utils = require('./utils')
 const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, getBlock, assertRejects, Decimal, randnums } = utils
-const { toBN, soliditySha3, toHex } = web3.utils
+const { toBN, soliditySha3, toHex, keccak256, toChecksumAddress } = web3.utils
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem')
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory')
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker')
 const WETH9 = artifacts.require('WETH9')
 
-const contracts = [PredictionMarketSystem, LMSRMarketMakerFactory, LMSRMarketMaker, WETH9]
-
 contract('MarketMaker', function(accounts) {
     let pmSystem
     let lmsrMarketMakerFactory
     let etherToken
-
-    before(testGas.createGasStatCollectorBeforeHook(contracts))
-    after(testGas.createGasStatCollectorAfterHook(contracts))
-
+    let nonce = 0x01
+    
     beforeEach(async () => {
         pmSystem = await PredictionMarketSystem.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         etherToken = await WETH9.deployed()
     })
-
+    
     it('should move price of an outcome to 0 after participants sell lots of that outcome to lmsrMarketMaker maker', async () => {
         // Create event
         const numOutcomes = 2
         const netOutcomeTokensSold = new Array(numOutcomes).fill(0)
         const questionId = '0xf00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafe'
         const oracleAddress = accounts[1]
+
+        // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+        
         const conditionId = await getParamFromTxEvent(
             await pmSystem.prepareCondition(oracleAddress, questionId, numOutcomes),
             'conditionId')
 
-        // Create lmsrMarketMaker
-        const investor = 0
-
-        const feeFactor = 0  // 0%
-        const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor,
-                { from: accounts[investor] }),
-            'lmsrMarketMaker', LMSRMarketMaker)
-
-        // Fund lmsrMarketMaker
+            const investor = 0
+            const feeFactor = 0  // 0%
+     
+        // Create and fund lmsrMarketMaker
         const funding = toBN(1e17)
-
         await etherToken.deposit({ value: funding, from: accounts[investor] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
-
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[investor] })
-        await lmsrMarketMaker.fund(funding, { from: accounts[investor] })
+        const lmsrMarketMaker = await getParamFromTxEvent(
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, 1e17,
+                { from: accounts[investor] }),
+                'lmsrMarketMaker', LMSRMarketMaker)
+        nonce++;
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
-
+        
         // User buys all outcomes
         const trader = 1
         const outcome = 1
@@ -116,28 +112,29 @@ contract('MarketMaker', function(accounts) {
         const conditionId = await getParamFromTxEvent(
             await pmSystem.prepareCondition(oracleAddress, questionId, toBN(numOutcomes)),
             'conditionId')
-
-        for(const [investor, funding, tokenCountRaw] of [
-            [2, toBN(1e17), 1e18],
-            [3, toBN(1), 10],
-            [4, toBN(1), 1e18],
-        ]) {
+        
+            for(const [investor, funding, tokenCountRaw] of [
+                [2, toBN(1e17), 1e18],
+                [3, toBN(1), 10],
+                [4, toBN(1), 1e18],
+            ]) {
+            // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+            const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+            await etherToken.deposit({ value: funding, from: accounts[investor] })
+            await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] })
+            
             const tokenCount = toBN(tokenCountRaw)
             const netOutcomeTokensSold = new Array(numOutcomes).fill(0)
+            
+            // Create and Fund lmsrMarketMaker
 
-            // Create lmsrMarketMaker
+            assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
             const feeFactor = 0  // 0%
             const lmsrMarketMaker = await getParamFromTxEvent(
-                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor,
+                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding,
                     { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
-
-            // Fund lmsrMarketMaker
-            await etherToken.deposit({ value: funding, from: accounts[investor] })
-            assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
-
-            await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[investor] })
-            await lmsrMarketMaker.fund(funding, { from: accounts[investor] })
+            nonce++
             assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
             // User buys ether tokens
@@ -181,28 +178,27 @@ contract('MarketMaker', function(accounts) {
         // Create event
         const numOutcomes = 4
         const questionId = '0xf00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafe'
+        const investor = 5
         const oracleAddress = accounts[1]
         const conditionId = await getParamFromTxEvent(
             await pmSystem.prepareCondition(oracleAddress, questionId, toBN(numOutcomes)),
             'conditionId')
 
-        // Create lmsrMarketMaker
-        const investor = 5
+        // Create and fund lmsrMarketMaker
+        // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+        const funding = toBN(1e18)
+        await etherToken.deposit({ value: funding, from: accounts[investor] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] })
+        assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
 
         const feeFactor = toBN(0)  // 0%
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor,
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding,
                 { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker)
-
-        // Fund lmsrMarketMaker
-        const funding = toBN(1e18)
-
-        await etherToken.deposit({ value: funding, from: accounts[investor] })
-        assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
-
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[investor] })
-        await lmsrMarketMaker.fund(funding, { from: accounts[investor] })
+        
+        nonce++
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
         const trader = 6
@@ -249,9 +245,7 @@ contract('LMSRMarketMaker', function (accounts) {
     let centralizedOracle
     let questionId = 100
     const numOutcomes = 2
-
-    before(testGas.createGasStatCollectorBeforeHook(contracts))
-    after(testGas.createGasStatCollectorAfterHook(contracts))
+    let nonce = 0x01
 
     before(async () => {
         pmSystem = await PredictionMarketSystem.deployed()
@@ -271,29 +265,21 @@ contract('LMSRMarketMaker', function (accounts) {
     it('can be created and closed', async () => {
         // Create lmsrMarketMaker
         const buyer = 5
-
+        const funding = toBN(100)
         const feeFactor = toBN(0)
+                
+        // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+        await etherToken.deposit({ value: funding, from: accounts[buyer] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[buyer] }) 
+
+        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
+
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, { from: accounts[buyer] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[buyer] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
-
-        // Fund lmsrMarketMaker
-        const funding = toBN(100)
-
-        await etherToken.deposit({ value: funding, from: accounts[buyer] })
-        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
-
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[buyer] })
-        await lmsrMarketMaker.fund(funding, { from: accounts[buyer] })
-
-        // LMSRMarketMaker can only be funded once
-        await etherToken.deposit({ value: funding, from: accounts[buyer] })
-        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[buyer] })
-        await assertRejects(lmsrMarketMaker.fund(funding, { from: accounts[buyer] }), 'lmsrMarketMaker funded twice')
-
-        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
+        nonce++
 
         // Close lmsrMarketMaker
         await lmsrMarketMaker.close({ from: accounts[buyer] })
@@ -304,7 +290,7 @@ contract('LMSRMarketMaker', function (accounts) {
         // Sell all outcomes
         await pmSystem.setApprovalForAll(lmsrMarketMaker.address, true, { from: accounts[buyer] })
         await pmSystem.mergePositions(etherToken.address, '0x00', conditionId, [...Array(numOutcomes).keys()].map(i => toBN(1 << i)), funding, { from: accounts[buyer] })
-        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.muln(2).toString())
+        assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
     })
 
     it('should allow buying and selling', async () => {
@@ -312,20 +298,20 @@ contract('LMSRMarketMaker', function (accounts) {
         const investor = 0
 
         const feeFactor = toBN(5e16)  // 5%
-        const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, { from: accounts[investor] }),
-            'lmsrMarketMaker', LMSRMarketMaker
-        )
-
-        // Fund lmsrMarketMaker
         const funding = toBN(1e18)
 
+        // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
         await etherToken.deposit({ value: funding, from: accounts[investor] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] }) 
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
+     
+        const lmsrMarketMaker = await getParamFromTxEvent(
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[investor] }),
+            'lmsrMarketMaker', LMSRMarketMaker
+        )
+        nonce++
 
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[investor] })
-
-        await lmsrMarketMaker.fund(funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
         // Buy outcome tokens
@@ -377,20 +363,18 @@ contract('LMSRMarketMaker', function (accounts) {
         const investor = 7
 
         const feeFactor = toBN(50000)  // 5%
+        const funding = toBN(1e18)
+        // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+        await etherToken.deposit({ value: funding, from: accounts[investor] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] }) 
+
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, { from: accounts[investor] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
+        nonce++
 
-        // Fund lmsrMarketMaker
-        const funding = toBN(1e18)
-
-        await etherToken.deposit({ value: funding, from: accounts[investor] })
-        assert.equal((await etherToken.balanceOf.call(accounts[investor])).toString(), funding.toString())
-
-        await etherToken.approve(lmsrMarketMaker.address, funding, { from: accounts[investor] })
-
-        await lmsrMarketMaker.fund(funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
         // Short sell outcome tokens
@@ -419,6 +403,7 @@ contract('LMSRMarketMaker', function (accounts) {
                 await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, { from: accounts[buyer] }),
                 'outcomeTokenNetCost'
             ).then(v => v.toString()), outcomeTokenCost.toString())
+
         assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), '0')
         assert.equal(await pmSystem.balanceOf.call(accounts[buyer], differentPositionId).then(v => v.toString()), tokenCount.toString())
     })
@@ -428,11 +413,18 @@ contract('LMSRMarketMaker', function (accounts) {
 
         const trader = 9
         const feeFactor = toBN(0)
+        const funding = toBN(1e16)
+
+        // // Calculate the address of the LMSR via nonce before it's deployed (in order to allow approve() call)
+        const checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrMarketMakerFactory.address, nonce])).substr(26));
+        await etherToken.deposit({ value: funding, from: accounts[trader] })
+        await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[trader] }) 
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, { from: accounts[trader] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[trader] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
+        nonce++
 
         const positionIds = [...Array(numOutcomes).keys()].map(i => soliditySha3(
                 { t: 'address', v: etherToken.address },
@@ -451,10 +443,6 @@ contract('LMSRMarketMaker', function (accounts) {
         // Allow all trading
         await etherToken.approve(lmsrMarketMaker.address, MAX_VALUE, { from: accounts[trader] })
         await pmSystem.setApprovalForAll(lmsrMarketMaker.address, true, { from: accounts[trader] })
-
-        // Fund lmsrMarketMaker
-        const funding = toBN(1e16)
-        await lmsrMarketMaker.fund(funding, { from: accounts[trader] })
 
         for(let i = 0; i < 10; i++) {
             const outcomeTokenAmounts = randnums(-1e16, 1e16, numOutcomes).map(n => toBN(n.valueOf()))

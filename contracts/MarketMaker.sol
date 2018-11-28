@@ -60,7 +60,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         conditionId = _conditionId;
         fee = _fee;
 
-        require(collateralToken.transferFrom(msg.sender, this, _funding) && collateralToken.approve(pmSystem, _funding));
+        require(collateralToken.transferFrom(tx.origin, this, _funding) && collateralToken.approve(pmSystem, _funding));
         uint[] memory partition = generateBasicPartition();
         pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
         funding = _funding;
@@ -115,6 +115,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         public
         onlyOwner
     {
+        require(stage == Stages.MarketCreated || stage == Stages.MarketPaused, "This Market has already been closed");
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
         for (uint i = 0; i < outcomeSlotCount; i++) {
             uint positionId = generateBasicPositionId(i);
