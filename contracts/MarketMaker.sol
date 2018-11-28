@@ -219,7 +219,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         return 0x0;
     }
 
-    function onERC1155BatchReceived(address _operator, address _from, uint256[] _ids, uint256[] _values, bytes _data) external returns(bytes4) {
+    function onERC1155BatchReceived(address _operator, address /*from*/, uint256[] /*ids*/, uint256[] /*values*/, bytes /*data*/) external returns(bytes4) {
         if (_operator == address(this)) {
             return 0xf23a6e61;
         }
