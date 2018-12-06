@@ -16,14 +16,14 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     /*
      *  Events
      */
-    event AutomatedMarketMakerCreated(uint funding);
-    event AutomatedMarketMakerPaused();
-    event AutomatedMarketMakerResumed();
-    event AutomatedMarketMakerClosed();
-    event MarketFundingChanged(int funding);
-    event FeeChanged(uint64 newFee);
-    event FeeWithdrawal(uint fees);
-    event OutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
+    event AMMCreated(uint initialFunding);
+    event AMMPaused();
+    event AMMResumed();
+    event AMMClosed();
+    event AMMFundingChanged(int fundingChange);
+    event AMMFeeChanged(uint64 newFee);
+    event AMMFeeWithdrawal(uint fees);
+    event AMMOutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
     
     /*
      *  Storage
@@ -34,23 +34,23 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     uint64 public fee;
     uint public funding;
-    Stages public stage;
-    enum Stages {
-        MarketCreated,
-        MarketPaused,
-        MarketClosed
+    Stage public stage;
+    enum Stage {
+        Running,
+        Paused,
+        Closed
     }
 
     /*
      *  Modifiers
      */
-    modifier atStage(Stages _stage) {
+    modifier atStage(Stage _stage) {
         // Contract has to be in given stage
         require(stage == _stage);
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee, uint _funding)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee, uint initialFunding, address marketOwner)
         public
     {
         // Validate inputs
@@ -60,54 +60,55 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         conditionId = _conditionId;
         fee = _fee;
 
-        require(collateralToken.transferFrom(tx.origin, this, _funding) && collateralToken.approve(pmSystem, _funding));
+        require(collateralToken.transferFrom(marketOwner, this, initialFunding) && collateralToken.approve(pmSystem, initialFunding));
         uint[] memory partition = generateBasicPartition();
-        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
-        funding = _funding;
+        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, initialFunding);
+        funding = initialFunding;
 
-        stage = Stages.MarketCreated;
-        emit AutomatedMarketMakerCreated(funding);
+        stage = Stage.Running;
+        emit AMMCreated(funding);
     }
 
     function calcNetCost(int[] outcomeTokenAmounts) public view returns (int netCost);
 
     /// @dev Allows to fund the market with collateral tokens converting them into outcome tokens
-    /// @param _funding Funding amount
-    function changeFunding(int _funding)
+    /// Note for the future: should combine splitPosition and mergePositions into one function, as code duplication causes things like this to happen.
+    function changeFunding(int fundingChange)
         public
         onlyOwner
-        atStage(Stages.MarketPaused)
+        atStage(Stage.Paused)
     {
-        // Either add or subtract funding based off whether the _funding parameter is negative or positive
-        if (_funding > 0) {
-            require(collateralToken.transferFrom(msg.sender, this, uint(_funding)) && collateralToken.approve(pmSystem, uint(_funding)));
+        require(fundingChange != 0, "A fundingChange of zero is not a fundingChange at all. It is unacceptable.");
+        // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
+        if (fundingChange > 0) {
+            require(collateralToken.transferFrom(msg.sender, this, uint(fundingChange)) && collateralToken.approve(pmSystem, uint(fundingChange)));
             uint[] memory addFundingPartition = generateBasicPartition();
-            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, addFundingPartition, uint(_funding));
-            funding = funding.add(uint(_funding));
-            emit MarketFundingChanged(_funding);
+            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, addFundingPartition, uint(fundingChange));
+            funding = funding.add(uint(fundingChange));
+            emit AMMFundingChanged(fundingChange);
         }
-        if (_funding < 0) {
+        if (fundingChange < 0) {
             uint[] memory removeFundingPartition = generateBasicPartition();
-            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, removeFundingPartition, uint(_funding));
-            funding = funding.sub(uint(_funding));
-            require(collateralToken.transfer(owner(), uint(_funding)));
-            emit MarketFundingChanged(_funding);
+            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, removeFundingPartition, uint(-fundingChange));
+            funding = funding.sub(uint(-fundingChange));
+            require(collateralToken.transfer(owner(), uint(-fundingChange)));
+            emit AMMFundingChanged(fundingChange);
         }
     }
 
-    function pause() public onlyOwner atStage(Stages.MarketCreated) {
-        stage = Stages.MarketPaused;
-        emit AutomatedMarketMakerPaused();
+    function pause() public onlyOwner atStage(Stage.Running) {
+        stage = Stage.Paused;
+        emit AMMPaused();
     }
     
-    function resume() public onlyOwner atStage(Stages.MarketPaused) {
-        stage = Stages.MarketCreated;
-        emit AutomatedMarketMakerResumed();
+    function resume() public onlyOwner atStage(Stage.Paused) {
+        stage = Stage.Running;
+        emit AMMResumed();
     }
 
-    function changeFee(uint64 _fee) onlyOwner atStage(Stages.MarketPaused) {
+    function changeFee(uint64 _fee) public onlyOwner atStage(Stage.Paused) {
         fee = _fee;
-        emit FeeChanged(fee);
+        emit AMMFeeChanged(fee);
     }
 
     /// @dev Allows market owner to close the markets by transferring all remaining outcome tokens to the owner
@@ -115,14 +116,14 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         public
         onlyOwner
     {
-        require(stage == Stages.MarketCreated || stage == Stages.MarketPaused, "This Market has already been closed");
+        require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
         for (uint i = 0; i < outcomeSlotCount; i++) {
             uint positionId = generateBasicPositionId(i);
             pmSystem.safeTransferFrom(this, owner(), positionId, pmSystem.balanceOf(this, positionId), "");
         }
-        stage = Stages.MarketClosed;
-        emit AutomatedMarketMakerClosed();
+        stage = Stage.Closed;
+        emit AMMClosed();
     }
 
     /// @dev Allows market owner to withdraw fees generated by trades
@@ -135,7 +136,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         fees = collateralToken.balanceOf(this);
         // Transfer fees
         require(collateralToken.transfer(owner(), fees));
-        emit FeeWithdrawal(fees);
+        emit AMMFeeWithdrawal(fees);
     }
 
     /// @dev Allows to trade outcome tokens and collateral with the market maker
@@ -144,7 +145,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     /// @return If positive, the amount of collateral sent to the market. If negative, the amount of collateral received from the market. If zero, no collateral was sent or received.
     function trade(int[] outcomeTokenAmounts, int collateralLimit)
         public
-        atStage(Stages.MarketCreated)
+        atStage(Stage.Running)
         returns (int netCost)
     {
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
@@ -198,7 +199,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
             }
         }
 
-        emit OutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
+        emit AMMOutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
     }
 
     /// @dev Calculates fee to be paid to market maker

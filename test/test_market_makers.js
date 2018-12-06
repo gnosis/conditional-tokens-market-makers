@@ -1,7 +1,5 @@
 const _ = require('lodash')
 const rlp = require('rlp')
-const { wait } = require('@digix/tempo')(web3)
-
 const utils = require('./utils')
 const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, getBlock, assertRejects, Decimal, randnums } = utils
 const { toBN, soliditySha3, toHex, keccak256, toChecksumAddress } = web3.utils
