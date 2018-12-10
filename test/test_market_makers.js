@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const rlp = require('rlp')
 const utils = require('./utils')
-const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, getBlock, assertRejects, Decimal, randnums } = utils
+const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, assertRejects, Decimal, randnums } = utils
 const { toBN, soliditySha3, toHex, keccak256, toChecksumAddress } = web3.utils
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem')
@@ -53,13 +53,6 @@ contract('MarketMaker', function(accounts) {
         // User buys all outcomes
         const trader = 1
         const outcome = 1
-        const positionId = soliditySha3(
-                { t: 'address', v: etherToken.address },
-                { t: 'bytes32', v: soliditySha3(
-                    { t: 'bytes32', v: conditionId },
-                    { t: 'uint', v: 1 << outcome },
-                )}
-            )
         const tokenCountRaw = 1e18
         const tokenCount = toBN(tokenCountRaw)
         const loopCount = toBN(10)
@@ -433,7 +426,7 @@ contract('LMSRMarketMaker', function (accounts) {
             ))
 
         // Get ready for trading
-        tradingStipend = toBN(1e19)
+        const tradingStipend = toBN(1e19)
         await etherToken.deposit({ value: tradingStipend.muln(2), from: accounts[trader] })
         await etherToken.approve(pmSystem.address, tradingStipend, { from: accounts[trader] })
         await pmSystem.splitPosition(etherToken.address, '0x00', conditionId, [...Array(numOutcomes).keys()].map(i => 1 << i), tradingStipend, { from: accounts[trader] })

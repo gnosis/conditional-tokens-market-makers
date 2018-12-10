@@ -27,7 +27,7 @@ const config = {
     },
     compilers: {
         solc: {
-            version: "0.4.24",
+            version: "0.5.1",
         }
     }
 }

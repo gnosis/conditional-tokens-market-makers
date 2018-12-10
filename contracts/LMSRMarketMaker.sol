@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@gnosis.pm/util-contracts/contracts/Fixed192x64Math.sol";
 import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
