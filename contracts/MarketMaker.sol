@@ -1,12 +1,13 @@
 pragma solidity ^0.4.24;
 import "erc-1155/contracts/IERC1155TokenReceiver.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
 import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 
 contract MarketMaker is Ownable, IERC1155TokenReceiver {
     using SignedSafeMath for int;
-    
+    using SafeMath for uint;
     /*
      *  Constants
      */    
@@ -15,10 +16,14 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     /*
      *  Events
      */
-    event AutomatedMarketMakerFunding(uint funding);
-    event AutomatedMarketMakerClosing();
-    event FeeWithdrawal(uint fees);
-    event OutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
+    event AMMCreated(uint initialFunding);
+    event AMMPaused();
+    event AMMResumed();
+    event AMMClosed();
+    event AMMFundingChanged(int fundingChange);
+    event AMMFeeChanged(uint64 newFee);
+    event AMMFeeWithdrawal(uint fees);
+    event AMMOutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
     
     /*
      *  Storage
@@ -29,23 +34,23 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     uint64 public fee;
     uint public funding;
-    Stages public stage;
-    enum Stages {
-        MarketCreated,
-        MarketFunded,
-        MarketClosed
+    Stage public stage;
+    enum Stage {
+        Running,
+        Paused,
+        Closed
     }
 
     /*
      *  Modifiers
      */
-    modifier atStage(Stages _stage) {
+    modifier atStage(Stage _stage) {
         // Contract has to be in given stage
         require(stage == _stage);
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee, uint initialFunding, address marketOwner)
         public
     {
         // Validate inputs
@@ -54,43 +59,71 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         collateralToken = _collateralToken;
         conditionId = _conditionId;
         fee = _fee;
-        stage = Stages.MarketCreated;
+
+        require(collateralToken.transferFrom(marketOwner, this, initialFunding) && collateralToken.approve(pmSystem, initialFunding));
+        uint[] memory partition = generateBasicPartition();
+        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, initialFunding);
+        funding = initialFunding;
+
+        stage = Stage.Running;
+        emit AMMCreated(funding);
     }
 
     function calcNetCost(int[] outcomeTokenAmounts) public view returns (int netCost);
 
     /// @dev Allows to fund the market with collateral tokens converting them into outcome tokens
-    /// @param _funding Funding amount
-    function fund(uint _funding)
+    /// Note for the future: should combine splitPosition and mergePositions into one function, as code duplication causes things like this to happen.
+    function changeFunding(int fundingChange)
         public
         onlyOwner
-        atStage(Stages.MarketCreated)
+        atStage(Stage.Paused)
     {
-        // Request collateral tokens and allow event contract to transfer them to buy all outcomes
-        require(   collateralToken.transferFrom(msg.sender, this, _funding)
-                && collateralToken.approve(pmSystem, _funding));
+        require(fundingChange != 0, "A fundingChange of zero is not a fundingChange at all. It is unacceptable.");
+        // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
+        if (fundingChange > 0) {
+            require(collateralToken.transferFrom(msg.sender, this, uint(fundingChange)) && collateralToken.approve(pmSystem, uint(fundingChange)));
+            uint[] memory addFundingPartition = generateBasicPartition();
+            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, addFundingPartition, uint(fundingChange));
+            funding = funding.add(uint(fundingChange));
+            emit AMMFundingChanged(fundingChange);
+        }
+        if (fundingChange < 0) {
+            uint[] memory removeFundingPartition = generateBasicPartition();
+            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, removeFundingPartition, uint(-fundingChange));
+            funding = funding.sub(uint(-fundingChange));
+            require(collateralToken.transfer(owner(), uint(-fundingChange)));
+            emit AMMFundingChanged(fundingChange);
+        }
+    }
 
-        uint[] memory partition = generateBasicPartition();
+    function pause() public onlyOwner atStage(Stage.Running) {
+        stage = Stage.Paused;
+        emit AMMPaused();
+    }
+    
+    function resume() public onlyOwner atStage(Stage.Paused) {
+        stage = Stage.Running;
+        emit AMMResumed();
+    }
 
-        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, _funding);
-        funding = _funding;
-        stage = Stages.MarketFunded;
-        emit AutomatedMarketMakerFunding(funding);
+    function changeFee(uint64 _fee) public onlyOwner atStage(Stage.Paused) {
+        fee = _fee;
+        emit AMMFeeChanged(fee);
     }
 
     /// @dev Allows market owner to close the markets by transferring all remaining outcome tokens to the owner
     function close()
         public
         onlyOwner
-        atStage(Stages.MarketFunded)
     {
+        require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
         for (uint i = 0; i < outcomeSlotCount; i++) {
             uint positionId = generateBasicPositionId(i);
             pmSystem.safeTransferFrom(this, owner(), positionId, pmSystem.balanceOf(this, positionId), "");
         }
-        stage = Stages.MarketClosed;
-        emit AutomatedMarketMakerClosing();
+        stage = Stage.Closed;
+        emit AMMClosed();
     }
 
     /// @dev Allows market owner to withdraw fees generated by trades
@@ -103,7 +136,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         fees = collateralToken.balanceOf(this);
         // Transfer fees
         require(collateralToken.transfer(owner(), fees));
-        emit FeeWithdrawal(fees);
+        emit AMMFeeWithdrawal(fees);
     }
 
     /// @dev Allows to trade outcome tokens and collateral with the market maker
@@ -112,7 +145,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     /// @return If positive, the amount of collateral sent to the market. If negative, the amount of collateral received from the market. If zero, no collateral was sent or received.
     function trade(int[] outcomeTokenAmounts, int collateralLimit)
         public
-        atStage(Stages.MarketFunded)
+        atStage(Stage.Running)
         returns (int netCost)
     {
         uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
@@ -166,7 +199,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
             }
         }
 
-        emit OutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
+        emit AMMOutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
     }
 
     /// @dev Calculates fee to be paid to market maker
@@ -182,6 +215,13 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
     function onERC1155Received(address operator, address /*from*/, uint256 /*id*/, uint256 /*value*/, bytes /*data*/) external returns(bytes4) {
         if (operator == address(this)) {
+            return 0xf23a6e61;
+        }
+        return 0x0;
+    }
+
+    function onERC1155BatchReceived(address _operator, address /*from*/, uint256[] /*ids*/, uint256[] /*values*/, bytes /*data*/) external returns(bytes4) {
+        if (_operator == address(this)) {
             return 0xf23a6e61;
         }
         return 0x0;

@@ -40,8 +40,9 @@
     "eslint-plugin-babel": "^5.1.0",
     "lodash": "^4.17.4",
     "npm-prepublish": "^1.2.3",
+    "rlp": "^2.1.0",
     "solhint": "^1.1.10",
-    "truffle": "^5.0.0-beta.2",
+    "truffle": "^5.0.0-user-level-mnemonic.0",
     "web3": "^1.0.0-beta.35"
   },
   "repository": {
