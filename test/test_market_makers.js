@@ -44,7 +44,7 @@ contract('MarketMaker', function(accounts) {
         await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, 1e17,
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, toBN(1e17),
                 { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
         nonce++;
