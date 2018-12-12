@@ -23,7 +23,7 @@ contract LMSRMarketMaker is MarketMaker {
     /// @dev Calculates the net cost for executing a given trade.
     /// @param outcomeTokenAmounts Amounts of outcome tokens to buy from the market. If an amount is negative, represents an amount to sell to the market.
     /// @return Net cost of trade. If positive, represents amount of collateral which would be paid to the market for the trade. If negative, represents amount of collateral which would be received from the market for the trade.
-    function calcNetCost(int[] outcomeTokenAmounts)
+    function calcNetCost(int[] memory outcomeTokenAmounts)
         public
         view
         returns (int netCost)
@@ -34,7 +34,7 @@ contract LMSRMarketMaker is MarketMaker {
 
         int[] memory otExpNums = new int[](outcomeSlotCount);
         for (uint i = 0; i < outcomeSlotCount; i++) {
-            int balance = int(pmSystem.balanceOf(this, generateBasicPositionId(i)));
+            int balance = int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
             require(balance >= 0);
             otExpNums[i] = outcomeTokenAmounts[i].sub(balance);
         }
@@ -68,7 +68,7 @@ contract LMSRMarketMaker is MarketMaker {
 
         int[] memory negOutcomeTokenBalances = new int[](outcomeSlotCount);
         for (uint i = 0; i < outcomeSlotCount; i++) {
-            int negBalance = -int(pmSystem.balanceOf(this, generateBasicPositionId(i)));
+            int negBalance = -int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
             require(negBalance <= 0);
             negOutcomeTokenBalances[i] = negBalance;
         }
@@ -90,7 +90,7 @@ contract LMSRMarketMaker is MarketMaker {
     /// @param otExpNums Numerators of the exponents, denoted as q in the aforementioned formula
     /// @param outcomeIndex Index of exponential term to extract (for use by marginal price function)
     /// @return A result structure composed of the sum, the offset used, and the summand associated with the supplied index
-    function sumExpOffset(int log2N, int[] otExpNums, uint8 outcomeIndex, Fixed192x64Math.EstimationMode estimationMode)
+    function sumExpOffset(int log2N, int[] memory otExpNums, uint8 outcomeIndex, Fixed192x64Math.EstimationMode estimationMode)
         private
         view
         returns (uint sum, int offset, uint outcomeExpTerm)
