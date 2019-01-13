@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/hg-market-makers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Collection of Market Makers for Gnosis Mercury",
   "scripts": {
     "lint": "eslint .",
@@ -14,7 +14,7 @@
     "extractnetinfo": "tnt eN",
     "resetnetinfo": "truffle networks --clean && tnt iN",
     "measuregasstats": "tnt measureGas -f inheritanceMap.json -o build/gas-stats.json --test-command 'npm test'",
-    "prepublishOnly": "eslint . && npm run measuregasstats && truffle compile && truffle networks --clean && tnt iN"
+    "prepublishOnly": "eslint . && truffle compile && truffle networks --clean && tnt iN"
   },
   "keywords": [
     "Ethereum",
@@ -26,13 +26,13 @@
   "author": "Gnosis (https://gnosis.pm)",
   "license": "LGPL-3.0",
   "dependencies": {
-    "@gnosis.pm/hg-contracts": "^0.1.0",
-    "@gnosis.pm/util-contracts": "^2.0.0-alpha.2",
-    "canonical-weth": "^1.1.0",
-    "openzeppelin-solidity": "^2.0.0"
+    "@gnosis.pm/hg-contracts": "^2.0.1",
+    "@gnosis.pm/util-contracts": "^2.0.0-alpha.3",
+    "erc-1155": "github:cag/erc-1155#sol-0.5",
+    "canonical-weth": "^1.3.1",
+    "openzeppelin-solidity": "github:elopio/openzeppelin-solidity#solc-nightly-2.0-update-2"
   },
   "devDependencies": {
-    "@digix/tempo": "^0.2.0",
     "@gnosis.pm/truffle-nice-tools": "^1.1.3",
     "babel-eslint": "^8.0.2",
     "decimal.js": "^10.0.1",
@@ -42,15 +42,14 @@
     "npm-prepublish": "^1.2.3",
     "rlp": "^2.1.0",
     "solhint": "^1.1.10",
-    "truffle": "^5.0.0-user-level-mnemonic.0",
-    "web3": "^1.0.0-beta.35"
+    "truffle": "5.0.0-beta.2"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gnosis/gnosis-contracts.git"
+    "url": "git+https://github.com/gnosis/hg-automated-market-makers"
   },
   "bugs": {
-    "url": "https://github.com/gnosis/gnosis-contracts/issues"
+    "url": "https://github.com/gnosis/hg-automated-market-makers/issues"
   },
-  "homepage": "https://github.com/gnosis/gnosis-contracts#readme"
+  "homepage": "https://github.com/gnosis/hg-automated-market-makers#readme"
 }
