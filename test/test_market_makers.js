@@ -44,7 +44,7 @@ contract('MarketMaker', function(accounts) {
         await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, toBN(1e17),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, toBN(1e17),
                 { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
         nonce++;
@@ -122,7 +122,7 @@ contract('MarketMaker', function(accounts) {
             assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
             const feeFactor = 0  // 0%
             const lmsrMarketMaker = await getParamFromTxEvent(
-                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding,
+                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding,
                     { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
             nonce++
@@ -185,7 +185,7 @@ contract('MarketMaker', function(accounts) {
 
         const feeFactor = toBN(0)  // 0%
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding,
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding,
                 { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker)
         
@@ -267,7 +267,7 @@ contract('LMSRMarketMaker', function (accounts) {
         assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[buyer] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[buyer] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
         nonce++
@@ -298,7 +298,7 @@ contract('LMSRMarketMaker', function (accounts) {
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
      
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[investor] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
         nonce++
@@ -361,7 +361,7 @@ contract('LMSRMarketMaker', function (accounts) {
         await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] }) 
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[investor] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
         nonce++
@@ -412,7 +412,7 @@ contract('LMSRMarketMaker', function (accounts) {
         await etherToken.approve(checksummedLMSRAddress, funding, { from: accounts[trader] }) 
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, conditionId, feeFactor, funding, { from: accounts[trader] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[trader] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
         nonce++
