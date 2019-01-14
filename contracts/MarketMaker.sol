@@ -144,7 +144,26 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     }
 
     /// @dev Allows to trade outcome tokens and collateral with the market maker
-    /// @param outcomeTokenAmounts Amounts of each outcome token to buy or sell. If positive, will buy this amount of outcome token from the market. If negative, will sell this amount back to the market instead.
+    /// @param outcomeTokenAmounts Amounts of each atomic outcome token to buy or sell. If positive, will buy this amount of outcome token from the market. If negative, will sell this amount back to the market instead. The indices of this array range from 0 to product(all conditions' outcomeSlotCounts)-1. For example, with two conditions with three outcome slots each and one condition with two outcome slots, you will have 3*3*2=18 total atomic outcome tokens, and the indices will range from 0 to 17. The indices map to atomic outcome slots depending on the order of the conditionIds. Let's say the first condition has slots A, B, C the second has slots X, Y, and the third has slots I, J, K. We can associate each atomic outcome token with indices by this map:
+    /// A&X&I == 0
+    /// B&X&I == 1
+    /// C&X&I == 2
+    /// A&Y&I == 3
+    /// B&Y&I == 4
+    /// C&Y&I == 5
+    /// A&X&J == 6
+    /// B&X&J == 7
+    /// C&X&J == 8
+    /// A&Y&J == 9
+    /// B&Y&J == 10
+    /// C&Y&J == 11
+    /// A&X&K == 12
+    /// B&X&K == 13
+    /// C&X&K == 14
+    /// A&Y&K == 15
+    /// B&Y&K == 16
+    /// C&Y&K == 17
+    /// This order is calculated via the generateAtomicPositionId function below: C&Y&I -> (2, 1, 0) -> 2 + 3 * (1 + 2 * (0 + 3 * (0 + 0)))
     /// @param collateralLimit If positive, this is the limit for the amount of collateral tokens which will be sent to the market to conduct the trade. If negative, this is the minimum amount of collateral tokens which will be received from the market for the trade. If zero, there is no limit.
     /// @return If positive, the amount of collateral sent to the market. If negative, the amount of collateral received from the market. If zero, no collateral was sent or received.
     function trade(int[] memory outcomeTokenAmounts, int collateralLimit)
