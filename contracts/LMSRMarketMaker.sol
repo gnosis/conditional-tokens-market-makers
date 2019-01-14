@@ -32,7 +32,7 @@ contract LMSRMarketMaker is MarketMaker {
 
         int[] memory otExpNums = new int[](atomicOutcomeSlotCount);
         for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
-            int balance = int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
+            int balance = int(pmSystem.balanceOf(address(this), generateAtomicPositionId(i)));
             require(balance >= 0);
             otExpNums[i] = outcomeTokenAmounts[i].sub(balance);
         }
@@ -63,7 +63,7 @@ contract LMSRMarketMaker is MarketMaker {
     {
         int[] memory negOutcomeTokenBalances = new int[](atomicOutcomeSlotCount);
         for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
-            int negBalance = -int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
+            int negBalance = -int(pmSystem.balanceOf(address(this), generateAtomicPositionId(i)));
             require(negBalance <= 0);
             negOutcomeTokenBalances[i] = negBalance;
         }

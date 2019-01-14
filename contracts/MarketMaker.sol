@@ -68,7 +68,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
 
         require(collateralToken.transferFrom(marketOwner, address(this), initialFunding) && collateralToken.approve(address(pmSystem), initialFunding));
 
-        splitPositionThroughAllConditions(initialFunding);
+        splitPositionThroughAllConditions(initialFunding, conditionIds.length, 0);
 
         funding = initialFunding;
 
@@ -89,12 +89,12 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
         if (fundingChange > 0) {
             require(collateralToken.transferFrom(msg.sender, address(this), uint(fundingChange)) && collateralToken.approve(address(pmSystem), uint(fundingChange)));
-            splitPositionThroughAllConditions(uint(fundingChange));
+            splitPositionThroughAllConditions(uint(fundingChange), conditionIds.length, 0);
             funding = funding.add(uint(fundingChange));
             emit AMMFundingChanged(fundingChange);
         }
         if (fundingChange < 0) {
-            mergePositionThroughAllConditions(uint(-fundingChange));
+            mergePositionsThroughAllConditions(uint(-fundingChange), conditionIds.length, 0);
             funding = funding.sub(uint(-fundingChange));
             require(collateralToken.transfer(owner(), uint(-fundingChange)));
             emit AMMFundingChanged(fundingChange);
@@ -123,7 +123,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     {
         require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
         for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
-            uint positionId = generateBasicPositionId(i);
+            uint positionId = generateAtomicPositionId(i);
             pmSystem.safeTransferFrom(address(this), owner(), positionId, pmSystem.balanceOf(address(this), positionId), "");
         }
         stage = Stage.Closed;
@@ -176,12 +176,12 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
                 collateralToken.approve(address(pmSystem), uint(outcomeTokenNetCost))
             );
 
-            splitPositionThroughAllConditions(uint(outcomeTokenNetCost));
+            splitPositionThroughAllConditions(uint(outcomeTokenNetCost), conditionIds.length, 0);
         }
 
         for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
             if(outcomeTokenAmounts[i] != 0) {
-                uint positionId = generateBasicPositionId(i);
+                uint positionId = generateAtomicPositionId(i);
                 if(outcomeTokenAmounts[i] < 0) {
                     pmSystem.safeTransferFrom(msg.sender, address(this), positionId, uint(-outcomeTokenAmounts[i]), "");
                 } else {
@@ -195,7 +195,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
             // This is safe since
             // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
             // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
-            mergePositionThroughAllConditions(uint(-outcomeTokenNetCost));
+            mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost), conditionIds.length, 0);
             if(netCost < 0) {
                 require(collateralToken.transfer(msg.sender, uint(-netCost)));
             }
@@ -240,36 +240,58 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         }
     }
 
-    function generateBasicPositionId(uint i)
+    function generateAtomicPositionId(uint i)
         internal
         view
         returns (uint)
     {
-        // TODO: make this correct
+        uint collectionId = 0;
+
+        for(uint k = 0; k < conditionIds.length; k++) {
+            uint curOutcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionIds[k]);
+            collectionId += uint(keccak256(abi.encodePacked(
+                conditionIds[k],
+                1 << (i % curOutcomeSlotCount))));
+            i /= curOutcomeSlotCount;
+        }
         return uint(keccak256(abi.encodePacked(
             collateralToken,
-            keccak256(abi.encodePacked(
-                conditionIds[0],
-                1 << i)))));
+            collectionId)));
     }
 
-    function splitPositionThroughAllConditions(uint amount)
+    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
         private
     {
-        // TODO: make this correct
-        for(uint i = 0; i < conditionIds.length; i++) {
-            uint[] memory partition = generateBasicPartition(conditionIds[i]);
-            pmSystem.splitPosition(collateralToken, bytes32(0), conditionIds[i], partition, amount);
+        if(conditionsLeft == 0) return;
+        conditionsLeft--;
+
+        uint[] memory partition = generateBasicPartition(conditionIds[conditionsLeft]);
+        pmSystem.splitPosition(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
+        for(uint i = 0; i < partition.length; i++) {
+            splitPositionThroughAllConditions(
+                amount,
+                conditionsLeft,
+                parentCollectionId + uint(keccak256(abi.encodePacked(
+                    conditionIds[conditionsLeft],
+                    partition[i]))));
         }
     }
 
-    function mergePositionThroughAllConditions(uint amount)
+    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
         private
     {
-        // TODO: make this correct
-        for(uint i = 0; i < conditionIds.length; i++) {
-            uint[] memory partition = generateBasicPartition(conditionIds[i]);
-            pmSystem.mergePositions(collateralToken, bytes32(0), conditionIds[i], partition, amount);
+        if(conditionsLeft == 0) return;
+        conditionsLeft--;
+
+        uint[] memory partition = generateBasicPartition(conditionIds[conditionsLeft]);
+        pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
+        for(uint i = 0; i < partition.length; i++) {
+            mergePositionsThroughAllConditions(
+                amount,
+                conditionsLeft,
+                parentCollectionId + uint(keccak256(abi.encodePacked(
+                    conditionIds[conditionsLeft],
+                    partition[i]))));
         }
     }
 }
