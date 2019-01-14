@@ -89,13 +89,11 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
         if (fundingChange > 0) {
             require(collateralToken.transferFrom(msg.sender, address(this), uint(fundingChange)) && collateralToken.approve(address(pmSystem), uint(fundingChange)));
-            uint[] memory addFundingPartition = generateBasicPartition();
             splitPositionThroughAllConditions(uint(fundingChange));
             funding = funding.add(uint(fundingChange));
             emit AMMFundingChanged(fundingChange);
         }
         if (fundingChange < 0) {
-            uint[] memory removeFundingPartition = generateBasicPartition();
             mergePositionThroughAllConditions(uint(-fundingChange));
             funding = funding.sub(uint(-fundingChange));
             require(collateralToken.transfer(owner(), uint(-fundingChange)));
@@ -155,7 +153,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         returns (int netCost)
     {
         require(outcomeTokenAmounts.length == atomicOutcomeSlotCount);
-        uint[] memory partition = generateBasicPartition();
 
         // Calculate net cost for executing trade
         int outcomeTokenNetCost = calcNetCost(outcomeTokenAmounts);
@@ -232,13 +229,12 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         return 0x0;
     }
 
-    function generateBasicPartition()
+    function generateBasicPartition(bytes32 conditionId)
         private
         view
         returns (uint[] memory partition)
     {
-        // TODO: make this correct
-        partition = new uint[](atomicOutcomeSlotCount);
+        partition = new uint[](pmSystem.getOutcomeSlotCount(conditionId));
         for(uint i = 0; i < partition.length; i++) {
             partition[i] = 1 << i;
         }
@@ -262,7 +258,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     {
         // TODO: make this correct
         for(uint i = 0; i < conditionIds.length; i++) {
-            uint[] memory partition = generateBasicPartition();
+            uint[] memory partition = generateBasicPartition(conditionIds[i]);
             pmSystem.splitPosition(collateralToken, bytes32(0), conditionIds[i], partition, amount);
         }
     }
@@ -272,7 +268,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     {
         // TODO: make this correct
         for(uint i = 0; i < conditionIds.length; i++) {
-            uint[] memory partition = generateBasicPartition();
+            uint[] memory partition = generateBasicPartition(conditionIds[i]);
             pmSystem.mergePositions(collateralToken, bytes32(0), conditionIds[i], partition, amount);
         }
     }
