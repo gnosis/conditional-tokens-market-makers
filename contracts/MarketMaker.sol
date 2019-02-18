@@ -303,7 +303,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         conditionsLeft--;
 
         uint[] memory partition = generateBasicPartition(conditionIds[conditionsLeft]);
-        pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
         for(uint i = 0; i < partition.length; i++) {
             mergePositionsThroughAllConditions(
                 amount,
@@ -312,5 +311,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
                     conditionIds[conditionsLeft],
                     partition[i]))));
         }
+        pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
     }
 }
