@@ -8,14 +8,11 @@ import "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 contract MarketMaker is Ownable, IERC1155TokenReceiver {
     using SignedSafeMath for int;
     using SafeMath for uint;
-    /*
-     *  Constants
-     */    
+    
+    /* Constants */    
     uint64 public constant FEE_RANGE = 10**18;
 
-    /*
-     *  Events
-     */
+    /* Events */
     event AMMCreated(uint initialFunding);
     event AMMPaused();
     event AMMResumed();
@@ -25,9 +22,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     event AMMFeeWithdrawal(uint fees);
     event AMMOutcomeTokenTrade(address indexed transactor, int[] outcomeTokenAmounts, int outcomeTokenNetCost, uint marketFees);
     
-    /*
-     *  Storage
-     */
+    /*  Storage */
     PredictionMarketSystem public pmSystem;
     IERC20 public collateralToken;
     bytes32[] public conditionIds;
@@ -41,9 +36,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         Closed
     }
 
-    /*
-     *  Modifiers
-     */
+    /*  Modifiers */
     modifier atStage(Stage _stage) {
         // Contract has to be in given stage
         require(stage == _stage);
@@ -166,7 +159,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     /// This order is calculated via the generateAtomicPositionId function below: C&Y&I -> (2, 1, 0) -> 2 + 3 * (1 + 2 * (0 + 3 * (0 + 0)))
     /// @param collateralLimit If positive, this is the limit for the amount of collateral tokens which will be sent to the market to conduct the trade. If negative, this is the minimum amount of collateral tokens which will be received from the market for the trade. If zero, there is no limit.
     /// @return If positive, the amount of collateral sent to the market. If negative, the amount of collateral received from the market. If zero, no collateral was sent or received.
-    function trade(int[] memory outcomeTokenAmounts, int collateralLimit)
+    function trade(int[] memory outcomeTokenAmounts, int collateralLimit, bool payoutAtomicTokens)
         public
         atStage(Stage.Running)
         returns (int netCost)
@@ -211,15 +204,22 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         }
 
         if(outcomeTokenNetCost < 0) {
-            // This is safe since
-            // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
-            // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
-            mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost), conditionIds.length, 0);
-            if(netCost < 0) {
-                require(collateralToken.transfer(msg.sender, uint(-netCost)));
+            // This is safe since 0x8000000000000000000000000000000000000000000000000000000000000000 == uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
+            if (payoutAtomicTokens) {
+                if(netCost < 0) {
+                    for (uint i=0; i<atomicOutcomeSlotCount; i++) {
+                            uint positionId = generateAtomicPositionId(i);
+                            pmSystem.safeTransferFrom(address(this), msg.sender, positionId, uint(-netCost), "");
+                    }
+                }
+            } else {
+                mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost), conditionIds.length, 0);
+                if(netCost < 0) {
+                    require(collateralToken.transfer(msg.sender, uint(-netCost)));
+                }
             }
         }
-
+        
         emit AMMOutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
     }
 

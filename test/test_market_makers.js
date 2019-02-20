@@ -74,7 +74,7 @@ contract('MarketMaker', function(accounts) {
 
             // Selling tokens
             assert.equal((await getParamFromTxEvent(
-                await lmsrMarketMaker.trade(outcomeTokenAmounts, profit.neg(), { from: accounts[trader] }), 'outcomeTokenNetCost'
+                await lmsrMarketMaker.trade(outcomeTokenAmounts, profit.neg(), false, { from: accounts[trader] }), 'outcomeTokenNetCost'
             )).neg().toString(), profit.toString())
 
             netOutcomeTokensSold[outcome] -= tokenCountRaw
@@ -144,7 +144,7 @@ contract('MarketMaker', function(accounts) {
                 // Buying tokens
                 await etherToken.approve(lmsrMarketMaker.address, cost, { from: accounts[trader] })
                 assert.equal(await getParamFromTxEvent(
-                    await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, { from: accounts[trader] }), 'outcomeTokenNetCost'
+                    await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, false, { from: accounts[trader] }), 'outcomeTokenNetCost'
                 ).then(v => v.toString()), cost.toString())
 
                 netOutcomeTokensSold[outcome] += tokenCountRaw
@@ -209,7 +209,7 @@ contract('MarketMaker', function(accounts) {
         await pmSystem.setApprovalForAll(lmsrMarketMaker.address, true, { from: accounts[trader] })
 
         assert.equal(await getParamFromTxEvent(
-            await lmsrMarketMaker.trade(tradeValues, cost, { from: accounts[trader] }), 'outcomeTokenNetCost'
+            await lmsrMarketMaker.trade(tradeValues, cost, false, { from: accounts[trader] }), 'outcomeTokenNetCost'
         ).then(v => v.toString()), cost.toString())
 
         // All state transitions associated with trade have been performed
@@ -328,7 +328,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         await etherToken.approve(lmsrMarketMaker.address, cost, { from: accounts[buyer] })
         assert.equal(await getParamFromTxEvent(
-            await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, { from: accounts[buyer] }), 'outcomeTokenNetCost'
+            await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, false, { from: accounts[buyer] }), 'outcomeTokenNetCost'
         ), outcomeTokenCost.toString())
 
         assert.equal(await pmSystem.balanceOf.call(accounts[buyer], positionId).then(v => v.toString()), tokenCount.toString())
@@ -342,7 +342,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         await pmSystem.setApprovalForAll(lmsrMarketMaker.address, true, { from: accounts[buyer] })
         assert.equal(await getParamFromTxEvent(
-            await lmsrMarketMaker.trade(outcomeTokenAmounts, profit.neg(), { from: accounts[buyer] }), 'outcomeTokenNetCost'
+            await lmsrMarketMaker.trade(outcomeTokenAmounts, profit.neg(), false, { from: accounts[buyer] }), 'outcomeTokenNetCost'
         ).then(v => v.neg().toString()), outcomeTokenProfit.toString())
 
         assert.equal(await pmSystem.balanceOf.call(accounts[buyer], positionId).then(v => v.toString()), '0')
@@ -391,7 +391,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         assert.equal(
             await getParamFromTxEvent(
-                await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, { from: accounts[buyer] }),
+                await lmsrMarketMaker.trade(outcomeTokenAmounts, cost, false, { from: accounts[buyer] }),
                 'outcomeTokenNetCost'
             ).then(v => v.toString()), outcomeTokenCost.toString())
 
@@ -446,7 +446,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
             let txResult;
             try {
-                txResult = await lmsrMarketMaker.trade(outcomeTokenAmounts, netCost, { from: accounts[trader] })
+                txResult = await lmsrMarketMaker.trade(outcomeTokenAmounts, netCost, false, { from: accounts[trader] })
             } catch(e) {
                 throw new Error(`trade ${ i } with input ${
                     outcomeTokenAmounts

@@ -109,7 +109,7 @@ contract("Multi-condition", function(accounts) {
         await collateralToken.deposit({ from: accounts[trader], value: toBN(1e18) });
         await collateralToken.approve(lmsrInstance.address, toBN(1e18), { from: accounts[trader] });
 
-        await lmsrInstance.trade([1e9, 0, 1e9, 0], 0, { from: accounts[trader]});
+        await lmsrInstance.trade([1e9, 0, 1e9, 0], 0, false, { from: accounts[trader]});
 
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId1), 1e9);
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId2), 0);
@@ -119,7 +119,7 @@ contract("Multi-condition", function(accounts) {
 
     it("Users should be able to make complex buy / sell orders", async () => {
         await pmSystem.setApprovalForAll(lmsrInstance.address, true, { from: accounts[trader] });
-        await lmsrInstance.trade([-1e9, 0, -1e9, 0], toBN(1e18), { from: accounts[trader]});
+        await lmsrInstance.trade([-1e9, 0, -1e9, 0], toBN(1e18), false, { from: accounts[trader]});
 
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId1), 0);
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId2), 0);
