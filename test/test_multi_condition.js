@@ -1,9 +1,8 @@
 // const truffleAssert = require('truffle-assertions');
 // const assert = require('chai').assert;
 const rlp = require('rlp');
-const { assertRejects, getParamFromTxEvent } = require("./utils");
-const { toHex, padLeft, keccak256, asciiToHex, toBN, fromWei, toChecksumAddress } = web3.utils;
-const { getBlockNumber } = web3.eth;
+const { getParamFromTxEvent } = require("./utils");
+const { toHex, padLeft, keccak256, toBN, toChecksumAddress } = web3.utils;
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
@@ -21,6 +20,7 @@ contract("Multi-condition", function(accounts) {
     let conditionOneId, conditionTwoId;
     let checksummedLMSRAddress;
     let lmsrInstance;
+    let lmsrFactory;
     let positionId1, positionId2, positionId3, positionId4;
 
     before(async () => {

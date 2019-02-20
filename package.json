@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/hg-market-makers",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "description": "Collection of Market Makers for Gnosis Mercury",
   "scripts": {
     "lint": "eslint .",

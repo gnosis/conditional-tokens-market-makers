@@ -1,8 +1,8 @@
 const _ = require('lodash')
 const rlp = require('rlp')
 const utils = require('./utils')
-const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, assertRejects, Decimal, randnums } = utils
-const { toBN, soliditySha3, toHex, keccak256, toChecksumAddress } = web3.utils
+const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, Decimal } = utils
+const { toBN, soliditySha3, keccak256, toChecksumAddress } = web3.utils
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem')
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory')

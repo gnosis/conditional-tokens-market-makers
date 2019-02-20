@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const rlp = require('rlp')
 const utils = require('./utils')
 const { getParamFromTxEvent, assertRejects, randnums } = utils
