@@ -126,4 +126,15 @@ contract("Multi-condition", function(accounts) {
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId3), 0);
         assert.equal(await pmSystem.balanceOf(accounts[trader], positionId4), 0);
     })
+
+    it("Should be able to do trades where users are paid in atomicOutcomeTokens", async () => {
+        await pmSystem.setApprovalForAll(lmsrInstance.address, true, { from: accounts[trader] });
+        await lmsrInstance.trade([100, 100, 1000, 0], toBN(1e18), true, { from: accounts[trader]});
+        await lmsrInstance.trade([-100, 0, -1, 0], toBN(1e18), true, { from: accounts[trader]});
+        
+        assert.equal((await pmSystem.balanceOf(accounts[trader], positionId1)).toString(), 26);
+        assert.equal((await pmSystem.balanceOf(accounts[trader], positionId2)).toString(), 126);
+        assert.equal((await pmSystem.balanceOf(accounts[trader], positionId3)).toString(), 1025);
+        assert.equal((await pmSystem.balanceOf(accounts[trader], positionId4)).toString(), 26);
+    })
 });
