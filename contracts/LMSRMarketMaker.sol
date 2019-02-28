@@ -15,9 +15,9 @@ contract LMSRMarketMaker is MarketMaker {
     uint constant ONE = 0x10000000000000000;
     int constant EXP_LIMIT = 3394200909562557497344;
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee, uint _funding, address marketOwner)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, uint _funding, address marketOwner)
         public
-        MarketMaker(_pmSystem, _collateralToken, _conditionId, _fee, _funding, marketOwner) {}
+        MarketMaker(_pmSystem, _collateralToken, _conditionIds, _fee, _funding, marketOwner) {}
 
 
     /// @dev Calculates the net cost for executing a given trade.
@@ -28,18 +28,16 @@ contract LMSRMarketMaker is MarketMaker {
         view
         returns (int netCost)
     {
-        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
-        require(outcomeSlotCount > 1);
-        require(outcomeTokenAmounts.length == outcomeSlotCount);
+        require(outcomeTokenAmounts.length == atomicOutcomeSlotCount);
 
-        int[] memory otExpNums = new int[](outcomeSlotCount);
-        for (uint i = 0; i < outcomeSlotCount; i++) {
-            int balance = int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
+        int[] memory otExpNums = new int[](atomicOutcomeSlotCount);
+        for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
+            int balance = int(pmSystem.balanceOf(address(this), generateAtomicPositionId(i)));
             require(balance >= 0);
             otExpNums[i] = outcomeTokenAmounts[i].sub(balance);
         }
 
-        int log2N = Fixed192x64Math.binaryLog(outcomeSlotCount * ONE, Fixed192x64Math.EstimationMode.UpperBound);
+        int log2N = Fixed192x64Math.binaryLog(atomicOutcomeSlotCount * ONE, Fixed192x64Math.EstimationMode.UpperBound);
 
         (uint sum, int offset, ) = sumExpOffset(log2N, otExpNums, 0, Fixed192x64Math.EstimationMode.UpperBound);
         netCost = Fixed192x64Math.binaryLog(sum, Fixed192x64Math.EstimationMode.UpperBound);
@@ -63,12 +61,9 @@ contract LMSRMarketMaker is MarketMaker {
         view
         returns (uint price)
     {
-        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
-        require(outcomeSlotCount > 1);
-
-        int[] memory negOutcomeTokenBalances = new int[](outcomeSlotCount);
-        for (uint i = 0; i < outcomeSlotCount; i++) {
-            int negBalance = -int(pmSystem.balanceOf(address(this), generateBasicPositionId(i)));
+        int[] memory negOutcomeTokenBalances = new int[](atomicOutcomeSlotCount);
+        for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
+            int negBalance = -int(pmSystem.balanceOf(address(this), generateAtomicPositionId(i)));
             require(negBalance <= 0);
             negOutcomeTokenBalances[i] = negBalance;
         }

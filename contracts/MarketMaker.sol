@@ -30,8 +30,8 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
      */
     PredictionMarketSystem public pmSystem;
     IERC20 public collateralToken;
-    bytes32 public conditionId;
-
+    bytes32[] public conditionIds;
+    uint public atomicOutcomeSlotCount;
     uint64 public fee;
     uint public funding;
     Stage public stage;
@@ -50,19 +50,26 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32 _conditionId, uint64 _fee, uint initialFunding, address marketOwner)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, uint initialFunding, address marketOwner)
         public
     {
         // Validate inputs
         require(address(_pmSystem) != address(0) && _fee < FEE_RANGE);
         pmSystem = _pmSystem;
         collateralToken = _collateralToken;
-        conditionId = _conditionId;
+        conditionIds = _conditionIds;
         fee = _fee;
 
+        atomicOutcomeSlotCount = 1;
+        for (uint i = 0; i < conditionIds.length; i++) {
+            atomicOutcomeSlotCount *= pmSystem.getOutcomeSlotCount(conditionIds[i]);
+        }
+        require(atomicOutcomeSlotCount > 1, "conditions must be valid");
+
         require(collateralToken.transferFrom(marketOwner, address(this), initialFunding) && collateralToken.approve(address(pmSystem), initialFunding));
-        uint[] memory partition = generateBasicPartition();
-        pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, initialFunding);
+
+        splitPositionThroughAllConditions(initialFunding, conditionIds.length, 0);
+
         funding = initialFunding;
 
         stage = Stage.Running;
@@ -82,14 +89,12 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
         if (fundingChange > 0) {
             require(collateralToken.transferFrom(msg.sender, address(this), uint(fundingChange)) && collateralToken.approve(address(pmSystem), uint(fundingChange)));
-            uint[] memory addFundingPartition = generateBasicPartition();
-            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, addFundingPartition, uint(fundingChange));
+            splitPositionThroughAllConditions(uint(fundingChange), conditionIds.length, 0);
             funding = funding.add(uint(fundingChange));
             emit AMMFundingChanged(fundingChange);
         }
         if (fundingChange < 0) {
-            uint[] memory removeFundingPartition = generateBasicPartition();
-            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, removeFundingPartition, uint(-fundingChange));
+            mergePositionsThroughAllConditions(uint(-fundingChange), conditionIds.length, 0);
             funding = funding.sub(uint(-fundingChange));
             require(collateralToken.transfer(owner(), uint(-fundingChange)));
             emit AMMFundingChanged(fundingChange);
@@ -117,9 +122,8 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         onlyOwner
     {
         require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
-        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
-        for (uint i = 0; i < outcomeSlotCount; i++) {
-            uint positionId = generateBasicPositionId(i);
+        for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
+            uint positionId = generateAtomicPositionId(i);
             pmSystem.safeTransferFrom(address(this), owner(), positionId, pmSystem.balanceOf(address(this), positionId), "");
         }
         stage = Stage.Closed;
@@ -140,7 +144,26 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
     }
 
     /// @dev Allows to trade outcome tokens and collateral with the market maker
-    /// @param outcomeTokenAmounts Amounts of each outcome token to buy or sell. If positive, will buy this amount of outcome token from the market. If negative, will sell this amount back to the market instead.
+    /// @param outcomeTokenAmounts Amounts of each atomic outcome token to buy or sell. If positive, will buy this amount of outcome token from the market. If negative, will sell this amount back to the market instead. The indices of this array range from 0 to product(all conditions' outcomeSlotCounts)-1. For example, with two conditions with three outcome slots each and one condition with two outcome slots, you will have 3*3*2=18 total atomic outcome tokens, and the indices will range from 0 to 17. The indices map to atomic outcome slots depending on the order of the conditionIds. Let's say the first condition has slots A, B, C the second has slots X, Y, and the third has slots I, J, K. We can associate each atomic outcome token with indices by this map:
+    /// A&X&I == 0
+    /// B&X&I == 1
+    /// C&X&I == 2
+    /// A&Y&I == 3
+    /// B&Y&I == 4
+    /// C&Y&I == 5
+    /// A&X&J == 6
+    /// B&X&J == 7
+    /// C&X&J == 8
+    /// A&Y&J == 9
+    /// B&Y&J == 10
+    /// C&Y&J == 11
+    /// A&X&K == 12
+    /// B&X&K == 13
+    /// C&X&K == 14
+    /// A&Y&K == 15
+    /// B&Y&K == 16
+    /// C&Y&K == 17
+    /// This order is calculated via the generateAtomicPositionId function below: C&Y&I -> (2, 1, 0) -> 2 + 3 * (1 + 2 * (0 + 3 * (0 + 0)))
     /// @param collateralLimit If positive, this is the limit for the amount of collateral tokens which will be sent to the market to conduct the trade. If negative, this is the minimum amount of collateral tokens which will be received from the market for the trade. If zero, there is no limit.
     /// @return If positive, the amount of collateral sent to the market. If negative, the amount of collateral received from the market. If zero, no collateral was sent or received.
     function trade(int[] memory outcomeTokenAmounts, int collateralLimit)
@@ -148,9 +171,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         atStage(Stage.Running)
         returns (int netCost)
     {
-        uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionId);
-        require(outcomeTokenAmounts.length == outcomeSlotCount);
-        uint[] memory partition = generateBasicPartition();
+        require(outcomeTokenAmounts.length == atomicOutcomeSlotCount);
 
         // Calculate net cost for executing trade
         int outcomeTokenNetCost = calcNetCost(outcomeTokenAmounts);
@@ -174,12 +195,12 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
                 collateralToken.approve(address(pmSystem), uint(outcomeTokenNetCost))
             );
 
-            pmSystem.splitPosition(collateralToken, bytes32(0), conditionId, partition, uint(outcomeTokenNetCost));
+            splitPositionThroughAllConditions(uint(outcomeTokenNetCost), conditionIds.length, 0);
         }
 
-        for (uint i = 0; i < outcomeSlotCount; i++) {
+        for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
             if(outcomeTokenAmounts[i] != 0) {
-                uint positionId = generateBasicPositionId(i);
+                uint positionId = generateAtomicPositionId(i);
                 if(outcomeTokenAmounts[i] < 0) {
                     pmSystem.safeTransferFrom(msg.sender, address(this), positionId, uint(-outcomeTokenAmounts[i]), "");
                 } else {
@@ -193,7 +214,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
             // This is safe since
             // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
             // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
-            pmSystem.mergePositions(collateralToken, bytes32(0), conditionId, partition, uint(-outcomeTokenNetCost));
+            mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost), conditionIds.length, 0);
             if(netCost < 0) {
                 require(collateralToken.transfer(msg.sender, uint(-netCost)));
             }
@@ -227,7 +248,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         return 0x0;
     }
 
-    function generateBasicPartition()
+    function generateBasicPartition(bytes32 conditionId)
         private
         view
         returns (uint[] memory partition)
@@ -238,15 +259,58 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         }
     }
 
-    function generateBasicPositionId(uint i)
+    function generateAtomicPositionId(uint i)
         internal
         view
         returns (uint)
     {
+        uint collectionId = 0;
+
+        for(uint k = 0; k < conditionIds.length; k++) {
+            uint curOutcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionIds[k]);
+            collectionId += uint(keccak256(abi.encodePacked(
+                conditionIds[k],
+                1 << (i % curOutcomeSlotCount))));
+            i /= curOutcomeSlotCount;
+        }
         return uint(keccak256(abi.encodePacked(
             collateralToken,
-            keccak256(abi.encodePacked(
-                conditionId,
-                1 << i)))));
+            collectionId)));
+    }
+
+    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+        private
+    {
+        if(conditionsLeft == 0) return;
+        conditionsLeft--;
+
+        uint[] memory partition = generateBasicPartition(conditionIds[conditionsLeft]);
+        pmSystem.splitPosition(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
+        for(uint i = 0; i < partition.length; i++) {
+            splitPositionThroughAllConditions(
+                amount,
+                conditionsLeft,
+                parentCollectionId + uint(keccak256(abi.encodePacked(
+                    conditionIds[conditionsLeft],
+                    partition[i]))));
+        }
+    }
+
+    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+        private
+    {
+        if(conditionsLeft == 0) return;
+        conditionsLeft--;
+
+        uint[] memory partition = generateBasicPartition(conditionIds[conditionsLeft]);
+        for(uint i = 0; i < partition.length; i++) {
+            mergePositionsThroughAllConditions(
+                amount,
+                conditionsLeft,
+                parentCollectionId + uint(keccak256(abi.encodePacked(
+                    conditionIds[conditionsLeft],
+                    partition[i]))));
+        }
+        pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
     }
 }
