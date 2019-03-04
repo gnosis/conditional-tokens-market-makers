@@ -1,9 +1,8 @@
 // const truffleAssert = require('truffle-assertions');
 // const assert = require('chai').assert;
 const rlp = require('rlp');
-const { assertRejects, getParamFromTxEvent } = require("./utils");
-const { toHex, padLeft, keccak256, asciiToHex, toBN, fromWei, toChecksumAddress } = web3.utils;
-const { getBlockNumber } = web3.eth;
+const { getParamFromTxEvent } = require("./utils");
+const { toHex, padLeft, keccak256, toBN, toChecksumAddress } = web3.utils;
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
@@ -31,7 +30,7 @@ contract("Multi-condition", function(accounts) {
         const questionTwoId = process.env.O2QUESTIONID || "0x0200000000000000000000000000000000000000000000000000000000000000"
 
         pmSystem = await PredictionMarketSystem.deployed();
-        lmsrFactory = await LMSRMarketMakerFactory.deployed();
+        const lmsrFactory = await LMSRMarketMakerFactory.deployed();
         collateralToken = await WETH9.deployed();
 
         conditionOneOracle = accounts[1]
