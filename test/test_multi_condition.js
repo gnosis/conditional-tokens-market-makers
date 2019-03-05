@@ -18,7 +18,6 @@ contract("Multi-condition", function(accounts) {
     let conditionTwoOracle;
     let collateralToken;
     let conditionOneId, conditionTwoId;
-    let checksummedLMSRAddress;
     let lmsrInstance;
     let positionId1, positionId2, positionId3, positionId4;
 
@@ -44,9 +43,8 @@ contract("Multi-condition", function(accounts) {
         conditionTwoId = keccak256(conditionTwoOracle + [questionTwoId, 2].map(v => padLeft(toHex(v), 64).slice(2)).join(""));
 
         // LMSR Address
-        checksummedLMSRAddress = toChecksumAddress(keccak256(rlp.encode([lmsrFactory.address, 0x01])).substr(26));
         await collateralToken.deposit({ value: funding, from: accounts[investor] })
-        await collateralToken.approve(checksummedLMSRAddress, funding, { from: accounts[investor] }) 
+        await collateralToken.approve(lmsrFactory.address, funding, { from: accounts[investor] }) 
 
         lmsrInstance = await getParamFromTxEvent(
             await lmsrFactory.createLMSRMarketMaker(pmSystem.address, collateralToken.address, [conditionOneId, conditionTwoId], feeFactor, funding,

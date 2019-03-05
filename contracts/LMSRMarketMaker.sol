@@ -15,9 +15,9 @@ contract LMSRMarketMaker is MarketMaker {
     uint constant ONE = 0x10000000000000000;
     int constant EXP_LIMIT = 3394200909562557497344;
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, uint _funding, address marketOwner)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, address marketOwner)
         public
-        MarketMaker(_pmSystem, _collateralToken, _conditionIds, _fee, _funding, marketOwner) {}
+        MarketMaker(_pmSystem, _collateralToken, _conditionIds, marketOwner) {}
 
 
     /// @dev Calculates the net cost for executing a given trade.

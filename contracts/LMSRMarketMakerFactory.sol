@@ -9,7 +9,11 @@ contract LMSRMarketMakerFactory {
         public
         returns (LMSRMarketMaker lmsrMarketMaker)
     {
-        lmsrMarketMaker = new LMSRMarketMaker(pmSystem, collateralToken, conditionIds, fee, funding, msg.sender);
+        lmsrMarketMaker = new LMSRMarketMaker(pmSystem, collateralToken, conditionIds, fee, msg.sender);
+        collateralToken.transferFrom(msg.sender, address(this), funding);
+        collateralToken.approve(address(lmsrMarketMaker), funding);
+        lmsrMarketMaker.changeFunding(int(funding));
+        lmsrMarketMaker.resume();
         lmsrMarketMaker.transferOwnership(msg.sender);
         emit LMSRMarketMakerCreation(msg.sender, lmsrMarketMaker, pmSystem, collateralToken, conditionIds, fee, funding);
     }
