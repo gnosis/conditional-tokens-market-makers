@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/hg-market-makers",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Collection of Market Makers for Gnosis Mercury",
   "scripts": {
     "lint": "eslint .",
@@ -26,10 +26,10 @@
   "author": "Gnosis (https://gnosis.pm)",
   "license": "LGPL-3.0",
   "dependencies": {
-    "@gnosis.pm/hg-contracts": "^2.0.1",
-    "@gnosis.pm/util-contracts": "^2.0.0-alpha.3",
-    "erc-1155": "github:cag/erc-1155#sol-0.5",
+    "@gnosis.pm/hg-contracts": "^0.2.0",
+    "@gnosis.pm/util-contracts": "^3.0.0-alpha.3",
     "canonical-weth": "^1.3.1",
+    "erc-1155": "github:cag/erc-1155#sol-0.5",
     "openzeppelin-solidity": "github:elopio/openzeppelin-solidity#solc-nightly-2.0-update-2"
   },
   "devDependencies": {
