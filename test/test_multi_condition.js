@@ -1,8 +1,5 @@
-// const truffleAssert = require('truffle-assertions');
-// const assert = require('chai').assert;
-const rlp = require('rlp');
 const { getParamFromTxEvent } = require("./utils");
-const { toHex, padLeft, keccak256, toBN, toChecksumAddress } = web3.utils;
+const { toHex, padLeft, keccak256, toBN } = web3.utils;
 
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
