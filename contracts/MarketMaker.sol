@@ -50,7 +50,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, uint initialFunding, address marketOwner)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee)
         public
     {
         // Validate inputs
@@ -66,13 +66,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         }
         require(atomicOutcomeSlotCount > 1, "conditions must be valid");
 
-        require(collateralToken.transferFrom(marketOwner, address(this), initialFunding) && collateralToken.approve(address(pmSystem), initialFunding));
-
-        splitPositionThroughAllConditions(initialFunding, conditionIds.length, 0);
-
-        funding = initialFunding;
-
-        stage = Stage.Running;
+        stage = Stage.Paused;
         emit AMMCreated(funding);
     }
 
@@ -85,7 +79,7 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
         onlyOwner
         atStage(Stage.Paused)
     {
-        require(fundingChange != 0, "A fundingChange of zero is not a fundingChange at all. It is unacceptable.");
+        require(fundingChange != 0, "funding change must be non-zero");
         // Either add or subtract funding based off whether the fundingChange parameter is negative or positive
         if (fundingChange > 0) {
             require(collateralToken.transferFrom(msg.sender, address(this), uint(fundingChange)) && collateralToken.approve(address(pmSystem), uint(fundingChange)));
