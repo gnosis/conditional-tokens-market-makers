@@ -26,11 +26,10 @@
   "author": "Gnosis (https://gnosis.pm)",
   "license": "LGPL-3.0",
   "dependencies": {
-    "@gnosis.pm/hg-contracts": "^0.2.0",
+    "@gnosis.pm/hg-contracts": "^0.2.3",
     "@gnosis.pm/util-contracts": "^3.0.0-alpha.3",
     "canonical-weth": "^1.3.1",
-    "erc-1155": "github:cag/erc-1155#pragma-0.5.0",
-    "openzeppelin-solidity": "github:elopio/openzeppelin-solidity#solc-nightly-2.0-update-2"
+    "openzeppelin-solidity": "^2.3.0"
   },
   "devDependencies": {
     "@gnosis.pm/truffle-nice-tools": "^1.1.3",

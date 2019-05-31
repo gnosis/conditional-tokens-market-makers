@@ -1,6 +1,8 @@
 pragma solidity ^0.5.1;
 
-import "./LMSRMarketMaker.sol";
+import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import { PredictionMarketSystem } from "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
+import { LMSRMarketMaker } from "./LMSRMarketMaker.sol";
 
 contract LMSRMarketMakerFactory {
     event LMSRMarketMakerCreation(address indexed creator, LMSRMarketMaker lmsrMarketMaker, PredictionMarketSystem pmSystem, IERC20 collateralToken, bytes32[] conditionIds, uint64 fee, uint funding);
