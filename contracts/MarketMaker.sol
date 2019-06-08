@@ -3,10 +3,10 @@ import { Ownable } from "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
-import { IERC1155TokenReceiver } from "@gnosis.pm/hg-contracts/contracts/ERC1155/IERC1155TokenReceiver.sol";
+import { ERC1155TokenReceiver } from "@gnosis.pm/hg-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
 import { PredictionMarketSystem } from "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 
-contract MarketMaker is Ownable, IERC1155TokenReceiver {
+contract MarketMaker is Ownable, ERC1155TokenReceiver {
     using SignedSafeMath for int;
     using SafeMath for uint;
     /*
@@ -241,10 +241,6 @@ contract MarketMaker is Ownable, IERC1155TokenReceiver {
             return 0xf23a6e61;
         }
         return 0x0;
-    }
-
-    function isERC1155TokenReceiver() external view returns(bytes4) {
-        return this.isERC1155TokenReceiver.selector;
     }
 
     function generateBasicPartition(bytes32 conditionId)
