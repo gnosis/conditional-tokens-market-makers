@@ -9,7 +9,6 @@
     "migrate": "truffle migrate",
     "networks": "truffle networks",
     "test": "truffle test",
-    "lint-contracts": "solhint contracts/**/*.sol",
     "injectnetinfo": "tnt iN",
     "extractnetinfo": "tnt eN",
     "resetnetinfo": "truffle networks --clean && tnt iN",
@@ -33,14 +32,12 @@
   },
   "devDependencies": {
     "@gnosis.pm/truffle-nice-tools": "^1.1.3",
-    "babel-eslint": "^8.0.2",
-    "decimal.js": "^10.0.1",
-    "eslint": "^4.11.0",
+    "babel-eslint": "^10.0.1",
+    "decimal.js": "^10.2.0",
+    "eslint": "^5.16.0",
     "eslint-plugin-babel": "^5.1.0",
     "lodash": "^4.17.4",
-    "npm-prepublish": "^1.2.3",
-    "solhint": "^1.1.10",
-    "truffle": "5.0.0-beta.2"
+    "truffle": "^5.0.21"
   },
   "repository": {
     "type": "git",
