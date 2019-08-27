@@ -5,6 +5,7 @@ const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory');
 const WETH9 = artifacts.require('WETH9');
+const Whitelist = artifacts.require('Whitelist')
 
 contract("Multi-condition", function(accounts) {
     const funding = process.env.AMMFUNDING || toBN(1e17);
@@ -28,6 +29,7 @@ contract("Multi-condition", function(accounts) {
         pmSystem = await PredictionMarketSystem.deployed();
         const lmsrFactory = await LMSRMarketMakerFactory.deployed();
         collateralToken = await WETH9.deployed();
+        const whitelist = await Whitelist.deployed();
 
         conditionOneOracle = accounts[1]
         conditionTwoOracle = accounts[2]
@@ -44,7 +46,7 @@ contract("Multi-condition", function(accounts) {
         await collateralToken.approve(lmsrFactory.address, funding, { from: accounts[investor] }) 
 
         lmsrInstance = await getParamFromTxEvent(
-            await lmsrFactory.createLMSRMarketMaker(pmSystem.address, collateralToken.address, [conditionOneId, conditionTwoId], feeFactor, funding,
+            await lmsrFactory.createLMSRMarketMaker(pmSystem.address, collateralToken.address, [conditionOneId, conditionTwoId], feeFactor, whitelist.address, funding,
                 { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
 

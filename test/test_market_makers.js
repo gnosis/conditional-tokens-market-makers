@@ -6,17 +6,20 @@ const { toBN, soliditySha3, toHex } = web3.utils
 const PredictionMarketSystem = artifacts.require('PredictionMarketSystem')
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory')
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker')
+const Whitelist = artifacts.require('Whitelist')
 const WETH9 = artifacts.require('WETH9')
 
 contract('MarketMaker', function(accounts) {
     let pmSystem
     let lmsrMarketMakerFactory
     let etherToken
+    let whitelist
     
     beforeEach(async () => {
         pmSystem = await PredictionMarketSystem.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         etherToken = await WETH9.deployed()
+        whitelist = await Whitelist.deployed()
     })
     
     it('should move price of an outcome to 0 after participants sell lots of that outcome to lmsrMarketMaker maker', async () => {
@@ -40,7 +43,7 @@ contract('MarketMaker', function(accounts) {
         await etherToken.approve(lmsrMarketMakerFactory.address, funding, { from: accounts[investor] })
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, toBN(1e17),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, toBN(1e17),
                 { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
@@ -115,7 +118,7 @@ contract('MarketMaker', function(accounts) {
             assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
             const feeFactor = 0  // 0%
             const lmsrMarketMaker = await getParamFromTxEvent(
-                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding,
+                await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding,
                     { from: accounts[investor] }),
                 'lmsrMarketMaker', LMSRMarketMaker)
             assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
@@ -175,7 +178,7 @@ contract('MarketMaker', function(accounts) {
 
         const feeFactor = toBN(0)  // 0%
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding,
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding,
                 { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker)
         
@@ -222,6 +225,7 @@ contract('LMSRMarketMaker', function (accounts) {
     let etherToken
     let conditionId
     let lmsrMarketMakerFactory
+    let whitelist
     let centralizedOracle
     let questionId = 100
     const numOutcomes = 2
@@ -230,6 +234,7 @@ contract('LMSRMarketMaker', function (accounts) {
         pmSystem = await PredictionMarketSystem.deployed()
         etherToken = await WETH9.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
+        whitelist = await Whitelist.deployed()
     })
 
     beforeEach(async () => {
@@ -253,7 +258,7 @@ contract('LMSRMarketMaker', function (accounts) {
         assert.equal(await etherToken.balanceOf.call(accounts[buyer]).then(v => v.toString()), funding.toString())
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[buyer] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[buyer] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
 
@@ -281,7 +286,7 @@ contract('LMSRMarketMaker', function (accounts) {
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), funding.toString())
      
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[investor] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
 
@@ -341,7 +346,7 @@ contract('LMSRMarketMaker', function (accounts) {
         await etherToken.approve(lmsrMarketMakerFactory.address, funding, { from: accounts[investor] }) 
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[investor] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[investor] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
 
@@ -389,7 +394,7 @@ contract('LMSRMarketMaker', function (accounts) {
         await etherToken.approve(lmsrMarketMakerFactory.address, funding, { from: accounts[trader] }) 
 
         const lmsrMarketMaker = await getParamFromTxEvent(
-            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, funding, { from: accounts[trader] }),
+            await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[trader] }),
             'lmsrMarketMaker', LMSRMarketMaker
         )
 

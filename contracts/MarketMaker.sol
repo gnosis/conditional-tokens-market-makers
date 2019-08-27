@@ -5,6 +5,7 @@ import { SafeMath } from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
 import { ERC1155TokenReceiver } from "@gnosis.pm/hg-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
 import { PredictionMarketSystem } from "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
+import { Whitelist } from "./Whitelist.sol";
 
 contract MarketMaker is Ownable, ERC1155TokenReceiver {
     using SignedSafeMath for int;
@@ -36,6 +37,8 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
     uint64 public fee;
     uint public funding;
     Stage public stage;
+    Whitelist public whitelist;
+
     enum Stage {
         Running,
         Paused,
@@ -51,7 +54,12 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee)
+    modifier onlyWhitelisted() {
+        require(whitelist.isWhitelisted(msg.sender), "only whitelisted users may call this function");
+        _;
+    }
+
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, Whitelist _whitelist)
         public
     {
         // Validate inputs
@@ -60,6 +68,7 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         collateralToken = _collateralToken;
         conditionIds = _conditionIds;
         fee = _fee;
+        whitelist = _whitelist;
 
         atomicOutcomeSlotCount = 1;
         for (uint i = 0; i < conditionIds.length; i++) {
@@ -164,6 +173,7 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
     function trade(int[] memory outcomeTokenAmounts, int collateralLimit)
         public
         atStage(Stage.Running)
+        onlyWhitelisted
         returns (int netCost)
     {
         require(outcomeTokenAmounts.length == atomicOutcomeSlotCount);
