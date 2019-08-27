@@ -4,6 +4,7 @@ import { Fixed192x64Math } from "@gnosis.pm/util-contracts/contracts/Fixed192x64
 import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import { PredictionMarketSystem } from "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
 import { MarketMaker } from "./MarketMaker.sol";
+import { Whitelist } from "./Whitelist.sol";
 
 /// @title LMSR market maker contract - Calculates share prices based on share distribution and initial funding
 /// @author Alan Lu - <alan.lu@gnosis.pm>
@@ -16,9 +17,9 @@ contract LMSRMarketMaker is MarketMaker {
     uint constant ONE = 0x10000000000000000;
     int constant EXP_LIMIT = 3394200909562557497344;
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee)
+    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, Whitelist whitelist)
         public
-        MarketMaker(_pmSystem, _collateralToken, _conditionIds, _fee) {}
+        MarketMaker(_pmSystem, _collateralToken, _conditionIds, _fee, whitelist) {}
 
 
     /// @dev Calculates the net cost for executing a given trade.
