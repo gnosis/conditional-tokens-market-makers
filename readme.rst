@@ -1,4 +1,4 @@
-.. figure:: https://raw.githubusercontent.com/gnosis/hg-contracts/master/assets/logo.png
+.. figure:: https://raw.githubusercontent.com/gnosis/conditional-tokens-contracts/master/assets/logo.png
    :target: https://gnosis.pm
    :alt: Gnosis Logo
 

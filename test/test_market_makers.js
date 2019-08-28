@@ -3,7 +3,7 @@ const utils = require('./utils')
 const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, assertRejects, Decimal, randnums } = utils
 const { toBN, soliditySha3, toHex } = web3.utils
 
-const PredictionMarketSystem = artifacts.require('PredictionMarketSystem')
+const ConditionalTokens = artifacts.require('ConditionalTokens')
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory')
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker')
 const Whitelist = artifacts.require('Whitelist')
@@ -16,7 +16,7 @@ contract('MarketMaker', function(accounts) {
     let whitelist
     
     beforeEach(async () => {
-        pmSystem = await PredictionMarketSystem.deployed()
+        pmSystem = await ConditionalTokens.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         etherToken = await WETH9.deployed()
         whitelist = await Whitelist.deployed()
@@ -231,7 +231,7 @@ contract('LMSRMarketMaker', function (accounts) {
     const numOutcomes = 2
 
     before(async () => {
-        pmSystem = await PredictionMarketSystem.deployed()
+        pmSystem = await ConditionalTokens.deployed()
         etherToken = await WETH9.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         whitelist = await Whitelist.deployed()

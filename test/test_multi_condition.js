@@ -1,7 +1,7 @@
 const { getParamFromTxEvent } = require("./utils");
 const { toHex, padLeft, keccak256, toBN } = web3.utils;
 
-const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
+const ConditionalTokens = artifacts.require('ConditionalTokens');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory');
 const WETH9 = artifacts.require('WETH9');
@@ -26,7 +26,7 @@ contract("Multi-condition", function(accounts) {
         const questionOneId = process.env.O1QUESTIONID || "0x0100000000000000000000000000000000000000000000000000000000000000"
         const questionTwoId = process.env.O2QUESTIONID || "0x0200000000000000000000000000000000000000000000000000000000000000"
 
-        pmSystem = await PredictionMarketSystem.deployed();
+        pmSystem = await ConditionalTokens.deployed();
         const lmsrFactory = await LMSRMarketMakerFactory.deployed();
         collateralToken = await WETH9.deployed();
         const whitelist = await Whitelist.deployed();
