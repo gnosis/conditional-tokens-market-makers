@@ -1,7 +1,8 @@
 const _ = require('lodash')
+const { getConditionId, getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
 const utils = require('./utils')
 const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, assertRejects, Decimal, randnums } = utils
-const { toBN, soliditySha3, toHex } = web3.utils
+const { toBN, toHex } = web3.utils
 
 const ConditionalTokens = artifacts.require('ConditionalTokens')
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory')
@@ -206,12 +207,12 @@ contract('MarketMaker', function(accounts) {
 
         // All state transitions associated with trade have been performed
         for(const [tradeValue, i] of tradeValues.map((v, i) => [v, i])) {
-            assert.equal(await pmSystem.balanceOf.call(accounts[trader], soliditySha3(
-                { t: 'address', v: etherToken.address },
-                { t: 'bytes32', v: soliditySha3(
-                    { t: 'bytes32', v: conditionId },
-                    { t: 'uint', v: 1 << i },
-                )}
+            assert.equal(await pmSystem.balanceOf.call(accounts[trader], getPositionId(
+                etherToken.address,
+                getCollectionId(
+                    conditionId,
+                    1 << i,
+                )
             )).then(v => v.toString()), initialOutcomeTokenCount.add(tradeValue))
         }
 
@@ -295,12 +296,12 @@ contract('LMSRMarketMaker', function (accounts) {
         // Buy outcome tokens
         const buyer = 1
         const outcome = 0
-        const positionId = soliditySha3(
-                { t: 'address', v: etherToken.address },
-                { t: 'bytes32', v: soliditySha3(
-                    { t: 'bytes32', v: conditionId },
-                    { t: 'uint', v: 1 << outcome },
-                )}
+        const positionId = getPositionId(
+                etherToken.address,
+                getCollectionId(
+                    conditionId,
+                    1 << outcome,
+                )
             )
         const tokenCount = toBN(1e15)
         let outcomeTokenAmounts = Array.from({length: numOutcomes}, (v, i) => i === outcome ? tokenCount : toBN(0))
@@ -356,12 +357,12 @@ contract('LMSRMarketMaker', function (accounts) {
         const buyer = 7
         const outcome = 0
         const differentOutcome = 1
-        const differentPositionId = soliditySha3(
-                { t: 'address', v: etherToken.address },
-                { t: 'bytes32', v: soliditySha3(
-                    { t: 'bytes32', v: conditionId },
-                    { t: 'uint', v: 1 << differentOutcome },
-                )}
+        const differentPositionId = getPositionId(
+                etherToken.address,
+                getCollectionId(
+                    conditionId,
+                    1 << differentOutcome,
+                )
             )
         const tokenCount = toBN(1e15)
         const outcomeTokenAmounts = Array.from({length: numOutcomes}, (v, i) => i !== outcome ? tokenCount : toBN(0))
@@ -398,12 +399,12 @@ contract('LMSRMarketMaker', function (accounts) {
             'lmsrMarketMaker', LMSRMarketMaker
         )
 
-        const positionIds = [...Array(numOutcomes).keys()].map(i => soliditySha3(
-                { t: 'address', v: etherToken.address },
-                { t: 'bytes32', v: soliditySha3(
-                    { t: 'bytes32', v: conditionId },
-                    { t: 'uint', v: 1 << i },
-                )}
+        const positionIds = [...Array(numOutcomes).keys()].map(i => getPositionId(
+                etherToken.address,
+                getCollectionId(
+                    conditionId,
+                    1 << i,
+                )
             ))
 
         // Get ready for trading

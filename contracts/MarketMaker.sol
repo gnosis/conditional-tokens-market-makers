@@ -4,6 +4,7 @@ import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
 import { ERC1155TokenReceiver } from "@gnosis.pm/conditional-tokens-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
+import { CTHelpers } from "@gnosis.pm/conditional-tokens-contracts/contracts/CTHelpers.sol";
 import { ConditionalTokens } from "@gnosis.pm/conditional-tokens-contracts/contracts/ConditionalTokens.sol";
 import { Whitelist } from "./Whitelist.sol";
 
@@ -273,15 +274,13 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
 
         for(uint k = 0; k < conditionIds.length; k++) {
             uint curOutcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionIds[k]);
-            collectionId = pmSystem.getCollectionId(collectionId, conditionIds[k], 1 << (i % curOutcomeSlotCount));
+            collectionId = CTHelpers.getCollectionId(collectionId, conditionIds[k], 1 << (i % curOutcomeSlotCount));
             i /= curOutcomeSlotCount;
         }
-        return uint(keccak256(abi.encodePacked(
-            collateralToken,
-            collectionId)));
+        return CTHelpers.getPositionId(collateralToken, collectionId);
     }
 
-    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, bytes32 parentCollectionId)
         private
     {
         if(conditionsLeft == 0) return;
@@ -293,13 +292,12 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             splitPositionThroughAllConditions(
                 amount,
                 conditionsLeft,
-                parentCollectionId + uint(keccak256(abi.encodePacked(
-                    conditionIds[conditionsLeft],
-                    partition[i]))));
+                CTHelpers.getCollectionId(parentCollectionId, conditionIds[conditionsLeft], partition[i])
+            );
         }
     }
 
-    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, bytes32 parentCollectionId)
         private
     {
         if(conditionsLeft == 0) return;
@@ -310,9 +308,8 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             mergePositionsThroughAllConditions(
                 amount,
                 conditionsLeft,
-                parentCollectionId + uint(keccak256(abi.encodePacked(
-                    conditionIds[conditionsLeft],
-                    partition[i]))));
+                CTHelpers.getCollectionId(parentCollectionId, conditionIds[conditionsLeft], partition[i])
+            );
         }
         pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
     }
