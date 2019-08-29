@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { getConditionId, getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
+const { getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
 const utils = require('./utils')
 const { ONE, isClose, lmsrMarginalPrice, getParamFromTxEvent, assertRejects, Decimal, randnums } = utils
 const { toBN, toHex } = web3.utils

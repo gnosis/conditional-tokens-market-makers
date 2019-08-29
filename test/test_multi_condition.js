@@ -1,6 +1,6 @@
 const { getParamFromTxEvent } = require("./utils");
 const { getConditionId, getCollectionId, combineCollectionIds, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
-const { toHex, padLeft, toBN } = web3.utils;
+const { toBN } = web3.utils;
 
 const ConditionalTokens = artifacts.require('ConditionalTokens');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
