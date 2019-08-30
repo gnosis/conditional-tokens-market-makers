@@ -1,7 +1,7 @@
 {
-  "name": "@gnosis.pm/hg-market-makers",
+  "name": "@gnosis.pm/conditional-tokens-market-makers",
   "version": "0.4.0",
-  "description": "Collection of Market Makers for Gnosis Mercury",
+  "description": "Collection of Market Makers for Gnosis Conditional Tokens",
   "scripts": {
     "lint": "eslint .",
     "develop": "truffle develop",
@@ -22,7 +22,7 @@
     "Solidity",
     "Truffle"
   ],
-  "author": "Gnosis (https://gnosis.pm)",
+  "author": "Gnosis (https://gnosis.io)",
   "license": "LGPL-3.0",
   "dependencies": {
     "@gnosis.pm/conditional-tokens-contracts": "^0.5.1",
@@ -41,10 +41,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gnosis/hg-automated-market-makers"
+    "url": "git+https://github.com/gnosis/conditional-tokens-market-makers"
   },
   "bugs": {
-    "url": "https://github.com/gnosis/hg-automated-market-makers/issues"
+    "url": "https://github.com/gnosis/conditional-tokens-market-makers/issues"
   },
-  "homepage": "https://github.com/gnosis/hg-automated-market-makers#readme"
+  "homepage": "https://github.com/gnosis/conditional-tokens-market-makers#readme"
 }
