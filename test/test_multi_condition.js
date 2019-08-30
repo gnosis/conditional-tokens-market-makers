@@ -1,7 +1,8 @@
 const { getParamFromTxEvent } = require("./utils");
-const { toHex, padLeft, keccak256, toBN } = web3.utils;
+const { getConditionId, getCollectionId, combineCollectionIds, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
+const { toBN } = web3.utils;
 
-const PredictionMarketSystem = artifacts.require('PredictionMarketSystem');
+const ConditionalTokens = artifacts.require('ConditionalTokens');
 const LMSRMarketMaker = artifacts.require('LMSRMarketMaker');
 const LMSRMarketMakerFactory = artifacts.require('LMSRMarketMakerFactory');
 const WETH9 = artifacts.require('WETH9');
@@ -26,7 +27,7 @@ contract("Multi-condition", function(accounts) {
         const questionOneId = process.env.O1QUESTIONID || "0x0100000000000000000000000000000000000000000000000000000000000000"
         const questionTwoId = process.env.O2QUESTIONID || "0x0200000000000000000000000000000000000000000000000000000000000000"
 
-        pmSystem = await PredictionMarketSystem.deployed();
+        pmSystem = await ConditionalTokens.deployed();
         const lmsrFactory = await LMSRMarketMakerFactory.deployed();
         collateralToken = await WETH9.deployed();
         const whitelist = await Whitelist.deployed();
@@ -38,8 +39,8 @@ contract("Multi-condition", function(accounts) {
         await pmSystem.prepareCondition(conditionOneOracle, questionOneId, 2)
         await pmSystem.prepareCondition(conditionTwoOracle, questionTwoId, 2)
         
-        conditionOneId = keccak256(conditionOneOracle + [questionOneId, 2].map(v => padLeft(toHex(v), 64).slice(2)).join(""));
-        conditionTwoId = keccak256(conditionTwoOracle + [questionTwoId, 2].map(v => padLeft(toHex(v), 64).slice(2)).join(""));
+        conditionOneId = getConditionId(conditionOneOracle, questionOneId, 2);
+        conditionTwoId = getConditionId(conditionTwoOracle, questionTwoId, 2);
 
         // LMSR Address
         await collateralToken.deposit({ value: funding, from: accounts[investor] })
@@ -51,30 +52,38 @@ contract("Multi-condition", function(accounts) {
                 'lmsrMarketMaker', LMSRMarketMaker)
 
         // The pmSystem should have 4 positions equal to env.AMMFUNDING now
-        const c1o1CollectionId = toBN(keccak256(
-            conditionOneId + padLeft(toHex(0b01), 64).slice(2)
-        ));
-        const c1o2CollectionId = toBN(keccak256(
-            conditionOneId + padLeft(toHex(0b10), 64).slice(2)
-        ));
-        const c2o1CollectionId = toBN(keccak256(
-            conditionTwoId + padLeft(toHex(0b01), 64).slice(2)
-        ));
-        const c2o2CollectionId = toBN(keccak256(
-            conditionTwoId + padLeft(toHex(0b10), 64).slice(2)
-        ));
+        const c1o1CollectionId = getCollectionId(conditionOneId, 0b01);
+        const c1o2CollectionId = getCollectionId(conditionOneId, 0b10);
+        const c2o1CollectionId = getCollectionId(conditionTwoId, 0b01);
+        const c2o2CollectionId = getCollectionId(conditionTwoId, 0b10);
 
-        positionId1 = keccak256(
-            collateralToken.address + toHex(c1o1CollectionId.add(c2o1CollectionId)).slice(-64)
+        positionId1 = getPositionId(
+            collateralToken.address,
+            combineCollectionIds([
+                c1o1CollectionId,
+                c2o1CollectionId,
+            ]),
         );
-        positionId2 = keccak256(
-            collateralToken.address + toHex(c1o2CollectionId.add(c2o1CollectionId)).slice(-64)
+        positionId2 = getPositionId(
+            collateralToken.address,
+            combineCollectionIds([
+                c1o2CollectionId,
+                c2o1CollectionId,
+            ]),
         );
-        positionId3 = keccak256(
-            collateralToken.address + toHex(c1o1CollectionId.add(c2o2CollectionId)).slice(-64)
+        positionId3 = getPositionId(
+            collateralToken.address,
+            combineCollectionIds([
+                c1o1CollectionId,
+                c2o2CollectionId,
+            ]),
         );
-        positionId4 = keccak256(
-            collateralToken.address + toHex(c1o2CollectionId.add(c2o2CollectionId)).slice(-64)
+        positionId4 = getPositionId(
+            collateralToken.address,
+            combineCollectionIds([
+                c1o2CollectionId,
+                c2o2CollectionId,
+            ]),
         );
     });
 

@@ -3,8 +3,9 @@ import { Ownable } from "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@gnosis.pm/util-contracts/contracts/SignedSafeMath.sol";
-import { ERC1155TokenReceiver } from "@gnosis.pm/hg-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
-import { PredictionMarketSystem } from "@gnosis.pm/hg-contracts/contracts/PredictionMarketSystem.sol";
+import { ERC1155TokenReceiver } from "@gnosis.pm/conditional-tokens-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
+import { CTHelpers } from "@gnosis.pm/conditional-tokens-contracts/contracts/CTHelpers.sol";
+import { ConditionalTokens } from "@gnosis.pm/conditional-tokens-contracts/contracts/ConditionalTokens.sol";
 import { Whitelist } from "./Whitelist.sol";
 
 contract MarketMaker is Ownable, ERC1155TokenReceiver {
@@ -30,7 +31,7 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
     /*
      *  Storage
      */
-    PredictionMarketSystem public pmSystem;
+    ConditionalTokens public pmSystem;
     IERC20 public collateralToken;
     bytes32[] public conditionIds;
     uint public atomicOutcomeSlotCount;
@@ -59,7 +60,7 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         _;
     }
 
-    constructor(PredictionMarketSystem _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, Whitelist _whitelist)
+    constructor(ConditionalTokens _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, Whitelist _whitelist)
         public
     {
         // Validate inputs
@@ -241,14 +242,14 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
 
     function onERC1155Received(address operator, address /*from*/, uint256 /*id*/, uint256 /*value*/, bytes calldata /*data*/) external returns(bytes4) {
         if (operator == address(this)) {
-            return 0xf23a6e61;
+            return this.onERC1155Received.selector;
         }
         return 0x0;
     }
 
     function onERC1155BatchReceived(address _operator, address /*from*/, uint256[] calldata /*ids*/, uint256[] calldata /*values*/, bytes calldata /*data*/) external returns(bytes4) {
         if (_operator == address(this)) {
-            return 0xf23a6e61;
+            return this.onERC1155BatchReceived.selector;
         }
         return 0x0;
     }
@@ -269,21 +270,17 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         view
         returns (uint)
     {
-        uint collectionId = 0;
+        bytes32 collectionId = bytes32(0);
 
         for(uint k = 0; k < conditionIds.length; k++) {
             uint curOutcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionIds[k]);
-            collectionId += uint(keccak256(abi.encodePacked(
-                conditionIds[k],
-                1 << (i % curOutcomeSlotCount))));
+            collectionId = CTHelpers.getCollectionId(collectionId, conditionIds[k], 1 << (i % curOutcomeSlotCount));
             i /= curOutcomeSlotCount;
         }
-        return uint(keccak256(abi.encodePacked(
-            collateralToken,
-            collectionId)));
+        return CTHelpers.getPositionId(collateralToken, collectionId);
     }
 
-    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+    function splitPositionThroughAllConditions(uint amount, uint conditionsLeft, bytes32 parentCollectionId)
         private
     {
         if(conditionsLeft == 0) return;
@@ -295,13 +292,12 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             splitPositionThroughAllConditions(
                 amount,
                 conditionsLeft,
-                parentCollectionId + uint(keccak256(abi.encodePacked(
-                    conditionIds[conditionsLeft],
-                    partition[i]))));
+                CTHelpers.getCollectionId(parentCollectionId, conditionIds[conditionsLeft], partition[i])
+            );
         }
     }
 
-    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, uint parentCollectionId)
+    function mergePositionsThroughAllConditions(uint amount, uint conditionsLeft, bytes32 parentCollectionId)
         private
     {
         if(conditionsLeft == 0) return;
@@ -312,9 +308,8 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             mergePositionsThroughAllConditions(
                 amount,
                 conditionsLeft,
-                parentCollectionId + uint(keccak256(abi.encodePacked(
-                    conditionIds[conditionsLeft],
-                    partition[i]))));
+                CTHelpers.getCollectionId(parentCollectionId, conditionIds[conditionsLeft], partition[i])
+            );
         }
         pmSystem.mergePositions(collateralToken, bytes32(parentCollectionId), conditionIds[conditionsLeft], partition, amount);
     }
