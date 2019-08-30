@@ -3,7 +3,7 @@
    :alt: Gnosis Logo
 
 
-Gnosis Mercury Automated Market Makers (AMM) 
+Conditional Tokens - Automated Market Makers (AMM) 
 ==============
 Prediction Markets 2.0 Automated Market Makers (AMM)
 ---------------------------
@@ -12,7 +12,7 @@ Prediction Markets 2.0 Automated Market Makers (AMM)
    :target: https://slack.gnosis.pm
    :alt: Slack Status
 
-Automated Market Makers for the Prediction Markets 2.0 (Mercury) platform.
+Automated Market Makers for the Prediction Markets 2.0 (Conditional Tokens) platform.
 
 `→ Online Documentation`_
 
