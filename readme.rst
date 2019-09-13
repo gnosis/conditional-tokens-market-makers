@@ -4,19 +4,19 @@
 
 
 Conditional Tokens - Automated Market Makers (AMM) 
-==============
+==================================================
 Prediction Markets 2.0 Automated Market Makers (AMM)
----------------------------
+----------------------------------------------------
 
-.. image:: https://slack.gnosis.pm/badge.svg
-   :target: https://slack.gnosis.pm
-   :alt: Slack Status
+.. image:: https://travis-ci.org/gnosis/conditional-tokens-market-makers.svg?branch=master
+   :target: https://travis-ci.org/gnosis/conditional-tokens-market-makers
+   :alt: Build Status
 
 Automated Market Makers for the Prediction Markets 2.0 (Conditional Tokens) platform.
 
 `→ Online Documentation`_
 
-.. _→ Online Documentation: https://gnosis-mercury.readthedocs.io/en/latest/
+.. _→ Online Documentation: https://gnosis-conditional-tokens.readthedocs.io/en/latest/
 .. _Gnosis: https://gnosis.pm
 
 
