@@ -23,7 +23,12 @@ const config = {
     },
     mocha: {
         enableTimeouts: false,
-        grep: process.env.TEST_GREP
+        grep: process.env.TEST_GREP,
+        reporter: "eth-gas-reporter",
+        reporterOptions: {
+            currency: "USD",
+            excludeContracts: ["Migrations"]
+        }
     },
     compilers: {
         solc: {
