@@ -49,7 +49,7 @@ contract("Multi-condition", function(accounts) {
         lmsrInstance = await getParamFromTxEvent(
             await lmsrFactory.createLMSRMarketMaker(pmSystem.address, collateralToken.address, [conditionOneId, conditionTwoId], feeFactor, whitelist.address, funding,
                 { from: accounts[investor] }),
-                'lmsrMarketMaker', LMSRMarketMaker)
+                'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation')
 
         // The pmSystem should have 4 positions equal to env.AMMFUNDING now
         const c1o1CollectionId = getCollectionId(conditionOneId, 0b01);

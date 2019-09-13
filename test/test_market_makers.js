@@ -46,7 +46,7 @@ contract('MarketMaker', function(accounts) {
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, toBN(1e17),
                 { from: accounts[investor] }),
-                'lmsrMarketMaker', LMSRMarketMaker)
+                'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation')
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
         
         // User buys all outcomes
@@ -121,7 +121,7 @@ contract('MarketMaker', function(accounts) {
             const lmsrMarketMaker = await getParamFromTxEvent(
                 await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding,
                     { from: accounts[investor] }),
-                'lmsrMarketMaker', LMSRMarketMaker)
+                'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation')
             assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
             // User buys ether tokens
@@ -181,7 +181,7 @@ contract('MarketMaker', function(accounts) {
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding,
                 { from: accounts[investor] }),
-            'lmsrMarketMaker', LMSRMarketMaker)
+            'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation')
         
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
 
@@ -260,7 +260,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[buyer] }),
-            'lmsrMarketMaker', LMSRMarketMaker
+            'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation'
         )
 
         // Close lmsrMarketMaker
@@ -288,7 +288,7 @@ contract('LMSRMarketMaker', function (accounts) {
      
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[investor] }),
-            'lmsrMarketMaker', LMSRMarketMaker
+            'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation'
         )
 
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
@@ -348,7 +348,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[investor] }),
-            'lmsrMarketMaker', LMSRMarketMaker
+            'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation'
         )
 
         assert.equal(await etherToken.balanceOf.call(accounts[investor]).then(v => v.toString()), '0')
@@ -396,7 +396,7 @@ contract('LMSRMarketMaker', function (accounts) {
 
         const lmsrMarketMaker = await getParamFromTxEvent(
             await lmsrMarketMakerFactory.createLMSRMarketMaker(pmSystem.address, etherToken.address, [conditionId], feeFactor, whitelist.address, funding, { from: accounts[trader] }),
-            'lmsrMarketMaker', LMSRMarketMaker
+            'lmsrMarketMaker', LMSRMarketMaker, 'LMSRMarketMakerCreation'
         )
 
         const positionIds = [...Array(numOutcomes).keys()].map(i => getPositionId(
