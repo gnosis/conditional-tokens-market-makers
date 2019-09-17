@@ -1,10 +1,7 @@
 pragma solidity ^0.5.1;
 import { SafeMath } from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import { Fixed192x64Math } from "@gnosis.pm/util-contracts/contracts/Fixed192x64Math.sol";
-import { IERC20 } from "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
-import { ConditionalTokens } from "@gnosis.pm/conditional-tokens-contracts/contracts/ConditionalTokens.sol";
 import { MarketMaker } from "./MarketMaker.sol";
-import { Whitelist } from "./Whitelist.sol";
 
 /// @title LMSR market maker contract - Calculates share prices based on share distribution and initial funding
 /// @author Alan Lu - <alan.lu@gnosis.pm>
