@@ -60,7 +60,10 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
     }
 
     modifier onlyWhitelisted() {
-        require(whitelist.isWhitelisted(msg.sender), "only whitelisted users may call this function");
+        require(
+            whitelist == Whitelist(0) || whitelist.isWhitelisted(msg.sender),
+            "only whitelisted users may call this function"
+        );
         _;
     }
 

@@ -20,7 +20,7 @@ contract('MarketMaker', function(accounts) {
         pmSystem = await ConditionalTokens.deployed()
         lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         etherToken = await WETH9.deployed()
-        whitelist = await Whitelist.deployed()
+        whitelist = { address: `0x${'0'.repeat(40)}` }
     })
     
     it('should move price of an outcome to 0 after participants sell lots of that outcome to lmsrMarketMaker maker', async () => {
