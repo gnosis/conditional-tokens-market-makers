@@ -64,56 +64,6 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         _;
     }
 
-    constructor(ConditionalTokens _pmSystem, IERC20 _collateralToken, bytes32[] memory _conditionIds, uint64 _fee, Whitelist _whitelist)
-        public
-    {
-        // Validate inputs
-        require(address(_pmSystem) != address(0) && _fee < FEE_RANGE);
-        pmSystem = _pmSystem;
-        collateralToken = _collateralToken;
-        conditionIds = _conditionIds;
-        fee = _fee;
-        whitelist = _whitelist;
-
-        atomicOutcomeSlotCount = 1;
-        outcomeSlotCounts = new uint[](conditionIds.length);
-        for (uint i = 0; i < conditionIds.length; i++) {
-            uint outcomeSlotCount = pmSystem.getOutcomeSlotCount(conditionIds[i]);
-            atomicOutcomeSlotCount *= outcomeSlotCount;
-            outcomeSlotCounts[i] = outcomeSlotCount;
-        }
-        require(atomicOutcomeSlotCount > 1, "conditions must be valid");
-
-        collectionIds = new bytes32[][](conditionIds.length);
-        _recordCollectionIDsForAllConditions(conditionIds.length, bytes32(0));
-
-        stage = Stage.Paused;
-        emit AMMCreated(funding);
-    }
-
-    function _recordCollectionIDsForAllConditions(uint conditionsLeft, bytes32 parentCollectionId) private {
-        if(conditionsLeft == 0) {
-            positionIds.push(CTHelpers.getPositionId(collateralToken, parentCollectionId));
-            return;
-        }
-
-        conditionsLeft--;
-
-        uint outcomeSlotCount = outcomeSlotCounts[conditionsLeft];
-
-        collectionIds[conditionsLeft].push(parentCollectionId);
-        for(uint i = 0; i < outcomeSlotCount; i++) {
-            _recordCollectionIDsForAllConditions(
-                conditionsLeft,
-                CTHelpers.getCollectionId(
-                    parentCollectionId,
-                    conditionIds[conditionsLeft],
-                    1 << i
-                )
-            );
-        }
-    }
-
     function calcNetCost(int[] memory outcomeTokenAmounts) public view returns (int netCost);
 
     /// @dev Allows to fund the market with collateral tokens converting them into outcome tokens
