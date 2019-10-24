@@ -190,22 +190,20 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             splitPositionThroughAllConditions(uint(outcomeTokenNetCost));
         }
 
+        bool touched = false;
+        uint[] memory transferAmounts = new uint[](atomicOutcomeSlotCount);
         for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
-            if(outcomeTokenAmounts[i] != 0) {
-                uint positionId = generateAtomicPositionId(i);
-                if(outcomeTokenAmounts[i] < 0) {
-                    pmSystem.safeTransferFrom(msg.sender, address(this), positionId, uint(-outcomeTokenAmounts[i]), "");
-                } else {
-                    pmSystem.safeTransferFrom(address(this), msg.sender, positionId, uint(outcomeTokenAmounts[i]), "");
-                }
-
+            if(outcomeTokenAmounts[i] < 0) {
+                touched = true;
+                // This is safe since
+                // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
+                // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
+                transferAmounts[i] = uint(-outcomeTokenAmounts[i]);
             }
         }
+        if(touched) pmSystem.safeBatchTransferFrom(msg.sender, address(this), positionIds, transferAmounts, "");
 
         if(outcomeTokenNetCost < 0) {
-            // This is safe since
-            // 0x8000000000000000000000000000000000000000000000000000000000000000 ==
-            // uint(-int(-0x8000000000000000000000000000000000000000000000000000000000000000))
             mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost));
             if(netCost < 0) {
                 require(collateralToken.transfer(msg.sender, uint(-netCost)));
@@ -213,6 +211,17 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
         }
 
         emit AMMOutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
+
+        touched = false;
+        for (uint i = 0; i < atomicOutcomeSlotCount; i++) {
+            if(outcomeTokenAmounts[i] > 0) {
+                touched = true;
+                transferAmounts[i] = uint(outcomeTokenAmounts[i]);
+            } else {
+                transferAmounts[i] = 0;
+            }
+        }
+        if(touched) pmSystem.safeBatchTransferFrom(address(this), msg.sender, positionIds, transferAmounts, "");
     }
 
     /// @dev Calculates fee to be paid to market maker
