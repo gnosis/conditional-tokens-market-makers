@@ -205,9 +205,6 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
 
         if(outcomeTokenNetCost < 0) {
             mergePositionsThroughAllConditions(uint(-outcomeTokenNetCost));
-            if(netCost < 0) {
-                require(collateralToken.transfer(msg.sender, uint(-netCost)));
-            }
         }
 
         emit AMMOutcomeTokenTrade(msg.sender, outcomeTokenAmounts, outcomeTokenNetCost, uint(fees));
@@ -222,6 +219,10 @@ contract MarketMaker is Ownable, ERC1155TokenReceiver {
             }
         }
         if(touched) pmSystem.safeBatchTransferFrom(address(this), msg.sender, positionIds, transferAmounts, "");
+
+        if(netCost < 0) {
+            require(collateralToken.transfer(msg.sender, uint(-netCost)));
+        }
     }
 
     /// @dev Calculates fee to be paid to market maker
