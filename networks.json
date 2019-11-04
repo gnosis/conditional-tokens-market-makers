@@ -593,6 +593,134 @@
       "transactionHash": "0xd65d0448076291d18f17d6cc563db55e0153fe171b9e92c0f005fabd3dc6606c"
     }
   },
+  "FixedProductMarketMakerFactory": {
+    "1": {
+      "events": {
+        "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "fixedProductMarketMaker",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionalTokens",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "collateralToken",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionIds",
+              "type": "bytes32[]"
+            },
+            {
+              "indexed": false,
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "name": "FixedProductMarketMakerCreation",
+          "type": "event",
+          "signature": "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43"
+        },
+        "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "clone",
+              "type": "address"
+            }
+          ],
+          "name": "CloneCreated",
+          "type": "event",
+          "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        }
+      },
+      "links": {},
+      "address": "0x2E8C4eC3fE9E3FC78FAE42af9c93A4DC88c38cb7",
+      "transactionHash": "0x1d0184f8db88aaf698bf1e2da7384cb59a2f6a10370434ed521114a47ebd8b86"
+    },
+    "4": {
+      "events": {
+        "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "fixedProductMarketMaker",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionalTokens",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "collateralToken",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionIds",
+              "type": "bytes32[]"
+            },
+            {
+              "indexed": false,
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "name": "FixedProductMarketMakerCreation",
+          "type": "event",
+          "signature": "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43"
+        },
+        "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "clone",
+              "type": "address"
+            }
+          ],
+          "name": "CloneCreated",
+          "type": "event",
+          "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        }
+      },
+      "links": {},
+      "address": "0x05ca4A640B610db5d708dfFF5C983dbC6b673bc6",
+      "transactionHash": "0xdee05b636b470d1b64c2e9c3ba288c379cf6569ecad9d4e081697321bb476e5c"
+    }
+  },
   "LMSRMarketMakerFactory": {
     "1": {
       "events": {
@@ -692,8 +820,8 @@
       "links": {
         "Fixed192x64Math": "0x75a6D6251511AF081f77F2B531C14808fB3805f3"
       },
-      "address": "0x37186b5d78EbB1f37bC56e5dCa7f18aB98256C4B",
-      "transactionHash": "0xa05f4d49a5a9e077a8a703b09fee0580f4a65f48da3ead86349eae45aa74ad7e"
+      "address": "0x578138C6211913c3fb23BfB8a7C9D220882d1a50",
+      "transactionHash": "0xc3d891e187572c6d9637ffa402b003717189c1e42ad9f43ae2e6e5144fc4c1a2"
     },
     "4": {
       "events": {
@@ -793,52 +921,202 @@
       "links": {
         "Fixed192x64Math": "0x81B086d91538fb1826F9D4e91662d4Fdd65Df413"
       },
-      "address": "0x4Df2a4641066bc2F971efd6E33A1bdE537C6478F",
-      "transactionHash": "0x32197796fa5cff2e8b664d6e4d0a28f9d9184412bf1942c9bcf35c85e78c1d81"
+      "address": "0x03Ce050DAEB28021086Bf8e9B7843d6212c05F7B",
+      "transactionHash": "0xb0f81591c6fc48e078f485965dd6453f6039abef27b82fb450c46ee1a3f2657e"
     }
   },
   "Migrations": {
     "1": {
       "events": {},
       "links": {},
-      "address": "0x25c676314988473da0d3312a173979B68e64721F",
-      "transactionHash": "0x43c88170b40eb9713512dd220d1d6980e1f7d0c91c0b429f13bbd0e6e04df99f"
+      "address": "0x03Ce050DAEB28021086Bf8e9B7843d6212c05F7B",
+      "transactionHash": "0x0ac0453238d2b4bb9ba0e393bb446c6453588fff9f259125c9a6cec4b0465336"
     },
     "4": {
       "events": {},
       "links": {},
-      "address": "0x9988819e9B3C783D42aeF412487415CdAE745c56",
-      "transactionHash": "0xf41951e050920addc06278c86fc11756f2e7e2f8e33d85f219f4f4c6466777a7"
+      "address": "0x06Fe100857e0cFE8B818E7476013C0203292D2A4",
+      "transactionHash": "0xa424fff196b8c0521bd902036a894fd9b6a3b9d10cc63533ae8bbfec4a393134"
     }
   },
   "WETH9": {
     "1": {
-      "events": {},
+      "events": {
+        "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "guy",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Approval",
+          "type": "event",
+          "signature": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"
+        },
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "dst",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Transfer",
+          "type": "event",
+          "signature": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        },
+        "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "dst",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Deposit",
+          "type": "event",
+          "signature": "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"
+        },
+        "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Withdrawal",
+          "type": "event",
+          "signature": "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65"
+        }
+      },
       "links": {},
-      "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-      "transactionHash":
-        "0xb95343413e459a0f97461812111254163ae53467855c0d73e0f1e7c5b8442fa3"
-    },
-    "3": {
-      "events": {},
-      "links": {},
-      "address": "0xc778417e063141139fce010982780140aa0cd5ab",
-      "transactionHash":
-        "0x19ae7fb1bd96c6f623741f76573a3e97d8a863358dafb1d773a8f9ad98b424b4"
+      "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "transactionHash": "0xb95343413e459a0f97461812111254163ae53467855c0d73e0f1e7c5b8442fa3"
     },
     "4": {
-      "events": {},
+      "events": {
+        "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "guy",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Approval",
+          "type": "event",
+          "signature": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"
+        },
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "dst",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Transfer",
+          "type": "event",
+          "signature": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        },
+        "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "dst",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Deposit",
+          "type": "event",
+          "signature": "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"
+        },
+        "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "src",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "wad",
+              "type": "uint256"
+            }
+          ],
+          "name": "Withdrawal",
+          "type": "event",
+          "signature": "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65"
+        }
+      },
       "links": {},
-      "address": "0xc778417e063141139fce010982780140aa0cd5ab",
-      "transactionHash":
-        "0x7bc8e85f99556aa23a41dd3c107e92ec76f057e4cea39f376ffb1b15d514b11f"
-    },
-    "42": {
-      "events": {},
-      "links": {},
-      "address": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
-      "transactionHash":
-        "0x0e8d602b350e2a896134d79b48b8a59488a0a70933d46c5736c47b468877be35"
+      "address": "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+      "transactionHash": "0x7bc8e85f99556aa23a41dd3c107e92ec76f057e4cea39f376ffb1b15d514b11f"
     }
   },
   "Whitelist": {
