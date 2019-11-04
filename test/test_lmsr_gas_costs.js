@@ -102,7 +102,7 @@ contract("LMSR gas costs", function([lmsrOwner, oracle, trader]) {
     shouldBeCreatedAndLiquid(1, 3);
     shouldBeCreatedAndLiquid(1, 4);
     shouldBeCreatedAndLiquid(1, 10);
-    shouldBeCreatedAndLiquid(1, 73);
+    // shouldBeCreatedAndLiquid(1, 73);
     shouldBeCreatedAndLiquid(2, 2);
     shouldBeCreatedAndLiquid(2, 3);
     shouldBeCreatedAndLiquid(2, 4);
