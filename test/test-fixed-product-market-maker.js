@@ -1,12 +1,13 @@
-require('openzeppelin-test-helpers')
+const { expectEvent } = require('openzeppelin-test-helpers')
 const { getConditionId, getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
 const { randomHex, toBN } = web3.utils
 
 const ConditionalTokens = artifacts.require('ConditionalTokens')
 const WETH9 = artifacts.require('WETH9')
+const FixedProductMarketMakerFactory = artifacts.require('FixedProductMarketMakerFactory')
 const FixedProductMarketMaker = artifacts.require('FixedProductMarketMaker')
 
-contract('FixedProductMarketMaker', function([, oracle, investor1, trader, investor2]) {
+contract('FixedProductMarketMaker', function([, creator, oracle, investor1, trader, investor2]) {
     const questionId = randomHex(32)
     const numOutcomes = 4
     const conditionId = getConditionId(oracle, questionId, numOutcomes)
@@ -17,18 +18,38 @@ contract('FixedProductMarketMaker', function([, oracle, investor1, trader, inves
 
     let conditionalTokens
     let collateralToken
+    let fixedProductMarketMakerFactory
     let positionIds
     before(async function() {
         conditionalTokens = await ConditionalTokens.deployed();
         collateralToken = await WETH9.deployed();
+        fixedProductMarketMakerFactory = await FixedProductMarketMakerFactory.deployed()
         positionIds = collectionIds.map(collectionId => getPositionId(collateralToken.address, collectionId))
     })
 
     let fixedProductMarketMaker;
     const feeFactor = toBN(3e15) // (0.3%)
-    step('can be created', async function() {
+    step('can be created by factory', async function() {
         await conditionalTokens.prepareCondition(oracle, questionId, numOutcomes);
-        fixedProductMarketMaker = await FixedProductMarketMaker.new(conditionalTokens.address, collateralToken.address, [conditionId], feeFactor);
+        const createArgs = [
+            conditionalTokens.address,
+            collateralToken.address,
+            [conditionId],
+            feeFactor,
+            { from: creator }
+        ]
+        const fixedProductMarketMakerAddress = await fixedProductMarketMakerFactory.createFixedProductMarketMaker.call(...createArgs)
+        const createTx = await fixedProductMarketMakerFactory.createFixedProductMarketMaker(...createArgs);
+        expectEvent.inLogs(createTx.logs, 'FixedProductMarketMakerCreation', {
+            creator,
+            fixedProductMarketMaker: fixedProductMarketMakerAddress,
+            conditionalTokens: conditionalTokens.address,
+            collateralToken: collateralToken.address,
+            // conditionIds: [conditionId],
+            fee: feeFactor,
+        });
+
+        fixedProductMarketMaker = await FixedProductMarketMaker.at(fixedProductMarketMakerAddress)
     })
 
     const addedFunds1 = toBN(10e18)
