@@ -22,53 +22,53 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     bytes32[][] collectionIds;
     uint[] positionIds;
 
-    constructor(
-        ConditionalTokens _conditionalTokens,
-        IERC20 _collateralToken,
-        bytes32[] memory _conditionIds,
-        uint _fee
-    ) public {
-        conditionalTokens = _conditionalTokens;
-        collateralToken = _collateralToken;
-        conditionIds = _conditionIds;
-        fee = _fee;
+    // constructor(
+    //     ConditionalTokens _conditionalTokens,
+    //     IERC20 _collateralToken,
+    //     bytes32[] memory _conditionIds,
+    //     uint _fee
+    // ) public {
+    //     conditionalTokens = _conditionalTokens;
+    //     collateralToken = _collateralToken;
+    //     conditionIds = _conditionIds;
+    //     fee = _fee;
 
-        uint atomicOutcomeSlotCount = 1;
-        outcomeSlotCounts = new uint[](conditionIds.length);
-        for (uint i = 0; i < conditionIds.length; i++) {
-            uint outcomeSlotCount = conditionalTokens.getOutcomeSlotCount(conditionIds[i]);
-            atomicOutcomeSlotCount *= outcomeSlotCount;
-            outcomeSlotCounts[i] = outcomeSlotCount;
-        }
-        require(atomicOutcomeSlotCount > 1, "conditions must be valid");
+    //     uint atomicOutcomeSlotCount = 1;
+    //     outcomeSlotCounts = new uint[](conditionIds.length);
+    //     for (uint i = 0; i < conditionIds.length; i++) {
+    //         uint outcomeSlotCount = conditionalTokens.getOutcomeSlotCount(conditionIds[i]);
+    //         atomicOutcomeSlotCount *= outcomeSlotCount;
+    //         outcomeSlotCounts[i] = outcomeSlotCount;
+    //     }
+    //     require(atomicOutcomeSlotCount > 1, "conditions must be valid");
 
-        collectionIds = new bytes32[][](conditionIds.length);
-        _recordCollectionIDsForAllConditions(conditionIds.length, bytes32(0));
-        require(positionIds.length == atomicOutcomeSlotCount, "position IDs construction failed!?");
-    }
+    //     collectionIds = new bytes32[][](conditionIds.length);
+    //     _recordCollectionIDsForAllConditions(conditionIds.length, bytes32(0));
+    //     require(positionIds.length == atomicOutcomeSlotCount, "position IDs construction failed!?");
+    // }
 
-    function _recordCollectionIDsForAllConditions(uint conditionsLeft, bytes32 parentCollectionId) private {
-        if(conditionsLeft == 0) {
-            positionIds.push(CTHelpers.getPositionId(collateralToken, parentCollectionId));
-            return;
-        }
+    // function _recordCollectionIDsForAllConditions(uint conditionsLeft, bytes32 parentCollectionId) private {
+    //     if(conditionsLeft == 0) {
+    //         positionIds.push(CTHelpers.getPositionId(collateralToken, parentCollectionId));
+    //         return;
+    //     }
 
-        conditionsLeft--;
+    //     conditionsLeft--;
 
-        uint outcomeSlotCount = outcomeSlotCounts[conditionsLeft];
+    //     uint outcomeSlotCount = outcomeSlotCounts[conditionsLeft];
 
-        collectionIds[conditionsLeft].push(parentCollectionId);
-        for(uint i = 0; i < outcomeSlotCount; i++) {
-            _recordCollectionIDsForAllConditions(
-                conditionsLeft,
-                CTHelpers.getCollectionId(
-                    parentCollectionId,
-                    conditionIds[conditionsLeft],
-                    1 << i
-                )
-            );
-        }
-    }
+    //     collectionIds[conditionsLeft].push(parentCollectionId);
+    //     for(uint i = 0; i < outcomeSlotCount; i++) {
+    //         _recordCollectionIDsForAllConditions(
+    //             conditionsLeft,
+    //             CTHelpers.getCollectionId(
+    //                 parentCollectionId,
+    //                 conditionIds[conditionsLeft],
+    //                 1 << i
+    //             )
+    //         );
+    //     }
+    // }
 
     function getPoolBalances() private view returns (uint[] memory) {
         address[] memory thises = new address[](positionIds.length);
