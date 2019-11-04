@@ -16,6 +16,7 @@ module.exports = {
         "assert": true,
         "artifacts": true,
         "contract": true,
+        "step": true,
         "web3": true
     }
 };

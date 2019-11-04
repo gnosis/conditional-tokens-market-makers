@@ -1,3 +1,6 @@
+require("chai/register-should");
+require('mocha-steps')
+
 const config = {
     networks: {
         mainnet: {
