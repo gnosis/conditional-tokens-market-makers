@@ -23,6 +23,11 @@ const config = {
             port: 8545,
             network_id: "4",
         },
+        goerli: {
+            host: "localhost",
+            port: 8545,
+            network_id: "5",
+        },
     },
     mocha: {
         enableTimeouts: false,
