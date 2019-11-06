@@ -1,11 +1,8 @@
-const { expectEvent, expectRevert, constants: { MAX_UINT256 } } = require("openzeppelin-test-helpers");
+const { expectEvent, constants: { MAX_UINT256 } } = require("openzeppelin-test-helpers");
 const { getParamFromTxEvent } = require("./utils");
 
 const {
     getConditionId,
-    getCollectionId,
-    combineCollectionIds,
-    getPositionId
 } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
 
 const { toBN, randomHex } = web3.utils;
