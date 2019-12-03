@@ -28,6 +28,11 @@ const config = {
             port: 8545,
             network_id: "5",
         },
+        develop: {
+            host: "localhost",
+            port: 8545,
+            network_id: "*",
+	},
     },
     mocha: {
         enableTimeouts: false,
