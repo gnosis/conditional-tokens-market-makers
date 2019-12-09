@@ -3,7 +3,7 @@ const { getParamFromTxEvent } = require("./utils");
 
 const {
     getConditionId,
-} = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
+} = require('@gnosis.pm/conditional-tokens-contracts/utils/id-helpers')(web3.utils)
 
 const { toBN, randomHex } = web3.utils;
 

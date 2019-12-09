@@ -1,5 +1,5 @@
 const { getParamFromTxEvent } = require("./utils");
-const { getConditionId, getCollectionId, combineCollectionIds, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
+const { getConditionId, getCollectionId, combineCollectionIds, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/utils/id-helpers')(web3.utils)
 const { toBN } = web3.utils;
 
 const ConditionalTokens = artifacts.require('ConditionalTokens');

@@ -1,5 +1,5 @@
 const { expectEvent } = require('openzeppelin-test-helpers')
-const { getConditionId, getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/test/utils')
+const { getConditionId, getCollectionId, getPositionId } = require('@gnosis.pm/conditional-tokens-contracts/utils/id-helpers')(web3.utils)
 const { randomHex, toBN } = web3.utils
 
 const ConditionalTokens = artifacts.require('ConditionalTokens')
