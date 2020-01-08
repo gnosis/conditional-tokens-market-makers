@@ -164,6 +164,7 @@ contract FPMMDeterministicFactory is Create2CloneFactory, FixedProductMarketMake
             collateralToken.approve(address(fixedProductMarketMaker), initialFunds);
             fixedProductMarketMaker.addFunding(initialFunds, distributionHint);
             fixedProductMarketMaker.transfer(msg.sender, fixedProductMarketMaker.balanceOf(address(this)));
+            currentFunder = address(0);
         }
 
         return fixedProductMarketMaker;
