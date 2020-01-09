@@ -579,6 +579,134 @@
       "transactionHash": "0x7db87634594160ae8acc745d38329f6e8902ae8cd98a9f1b10afb606b41c436b"
     }
   },
+  "FPMMDeterministicFactory": {
+    "1": {
+      "events": {
+        "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "fixedProductMarketMaker",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionalTokens",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "collateralToken",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionIds",
+              "type": "bytes32[]"
+            },
+            {
+              "indexed": false,
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "name": "FixedProductMarketMakerCreation",
+          "type": "event",
+          "signature": "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43"
+        },
+        "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "clone",
+              "type": "address"
+            }
+          ],
+          "name": "CloneCreated",
+          "type": "event",
+          "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        }
+      },
+      "links": {},
+      "address": "0x17227353c2782A361ec65DCe27d05830Df41D3D3",
+      "transactionHash": "0x595863911ab384561d91c479b791ace3cfe2eccfa680f1c0495fc0c99d5679dd"
+    },
+    "4": {
+      "events": {
+        "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "fixedProductMarketMaker",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionalTokens",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "collateralToken",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "conditionIds",
+              "type": "bytes32[]"
+            },
+            {
+              "indexed": false,
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "name": "FixedProductMarketMakerCreation",
+          "type": "event",
+          "signature": "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43"
+        },
+        "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "clone",
+              "type": "address"
+            }
+          ],
+          "name": "CloneCreated",
+          "type": "event",
+          "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        }
+      },
+      "links": {},
+      "address": "0x578138C6211913c3fb23BfB8a7C9D220882d1a50",
+      "transactionHash": "0xf499ac6aa698249c42833dc6ee6edbe1305174503162a96baf8f7c2cfa791e19"
+    }
+  },
   "Fixed192x64Math": {
     "1": {
       "events": {},
