@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/conditional-tokens-market-makers",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Collection of Market Makers for Gnosis Conditional Tokens",
   "scripts": {
     "lint": "eslint .",
