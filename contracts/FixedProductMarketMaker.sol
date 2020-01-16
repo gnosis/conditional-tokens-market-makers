@@ -228,6 +228,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                     poolBalance.add(investmentAmountMinusFees);
             }
         }
+        require(endingOutcomeBalance > 0, "must have non-zero balances");
 
         return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance);
     }
@@ -246,6 +247,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                     poolBalance.sub(returnAmountPlusFees);
             }
         }
+        require(endingOutcomeBalance > 0, "must have non-zero balances");
 
         return returnAmount.add(endingOutcomeBalance).sub(sellTokenPoolBalance);
     }
