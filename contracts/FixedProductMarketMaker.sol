@@ -219,21 +219,17 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
         uint investmentAmountMinusFees = investmentAmount.sub(investmentAmount.mul(fee) / ONE);
-        uint balancesProduct = 1;
-        uint denom = 1;
-        uint buyTokenPoolBalance;
+        uint buyTokenPoolBalance = poolBalances[outcomeIndex];
+        uint endingOutcomeBalance = buyTokenPoolBalance;
         for(uint i = 0; i < poolBalances.length; i++) {
-            uint poolBalance = poolBalances[i];
-            balancesProduct = balancesProduct.mul(poolBalance);
-            if(i == outcomeIndex)
-                buyTokenPoolBalance = poolBalance;
-            else
-                denom = denom.mul(poolBalance.add(investmentAmountMinusFees));
+            if(i != outcomeIndex) {
+                uint poolBalance = poolBalances[i];
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance) /
+                    poolBalance.add(investmentAmountMinusFees);
+            }
         }
-        require(balancesProduct > 0, "must have non-zero balances");
-        require(denom > 0, "must end up with valid denominator");
 
-        return buyTokenPoolBalance.add(investmentAmount).sub(balancesProduct / denom);
+        return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance);
     }
 
     function calcSellAmount(uint returnAmount, uint outcomeIndex) public view returns (uint outcomeTokenSellAmount) {
@@ -241,21 +237,17 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
         uint returnAmountPlusFees = returnAmount.add(returnAmount.mul(fee) / ONE);
-        uint balancesProduct = 1;
-        uint denom = 1;
-        uint sellTokenPoolBalance;
+        uint sellTokenPoolBalance = poolBalances[outcomeIndex];
+        uint endingOutcomeBalance = sellTokenPoolBalance;
         for(uint i = 0; i < poolBalances.length; i++) {
-            uint poolBalance = poolBalances[i];
-            balancesProduct = balancesProduct.mul(poolBalance);
-            if(i == outcomeIndex)
-                sellTokenPoolBalance = poolBalance;
-            else
-                denom = denom.mul(poolBalance.sub(returnAmountPlusFees));
+            if(i != outcomeIndex) {
+                uint poolBalance = poolBalances[i];
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance) /
+                    poolBalance.sub(returnAmountPlusFees);
+            }
         }
-        require(balancesProduct > 0, "must have non-zero balances");
-        require(denom > 0, "must end up with valid denominator");
 
-        return returnAmount.add(balancesProduct / denom).sub(sellTokenPoolBalance);
+        return returnAmount.add(endingOutcomeBalance).sub(sellTokenPoolBalance);
     }
 
     function buy(uint investmentAmount, uint outcomeIndex, uint minOutcomeTokensToBuy) external {
