@@ -8,8 +8,18 @@ import { CTHelpers } from "@gnosis.pm/conditional-tokens-contracts/contracts/CTH
 import { ERC1155TokenReceiver } from "@gnosis.pm/conditional-tokens-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
 
 
+library CeilDiv {
+    // calculates ceil(x/y)
+    function ceildiv(uint x, uint y) internal pure returns (uint) {
+        if(x > 0) return ((x - 1) / y) + 1;
+        return x / y;
+    }
+}
+
+
 contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     using SafeMath for uint;
+    using CeilDiv for uint;
 
     uint constant ONE = 10**18;
 
@@ -220,17 +230,18 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         uint[] memory poolBalances = getPoolBalances();
         uint investmentAmountMinusFees = investmentAmount.sub(investmentAmount.mul(fee) / ONE);
         uint buyTokenPoolBalance = poolBalances[outcomeIndex];
-        uint endingOutcomeBalance = buyTokenPoolBalance;
+        uint endingOutcomeBalance = buyTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
             if(i != outcomeIndex) {
                 uint poolBalance = poolBalances[i];
-                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance) /
-                    poolBalance.add(investmentAmountMinusFees);
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance).ceildiv(
+                    poolBalance.add(investmentAmountMinusFees)
+                );
             }
         }
         require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance);
+        return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance.ceildiv(ONE));
     }
 
     function calcSellAmount(uint returnAmount, uint outcomeIndex) public view returns (uint outcomeTokenSellAmount) {
@@ -239,17 +250,18 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         uint[] memory poolBalances = getPoolBalances();
         uint returnAmountPlusFees = returnAmount.add(returnAmount.mul(fee) / ONE);
         uint sellTokenPoolBalance = poolBalances[outcomeIndex];
-        uint endingOutcomeBalance = sellTokenPoolBalance;
+        uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
             if(i != outcomeIndex) {
                 uint poolBalance = poolBalances[i];
-                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance) /
-                    poolBalance.sub(returnAmountPlusFees);
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance).ceildiv(
+                    poolBalance.sub(returnAmountPlusFees)
+                );
             }
         }
         require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return returnAmount.add(endingOutcomeBalance).sub(sellTokenPoolBalance);
+        return returnAmount.add(endingOutcomeBalance.ceildiv(ONE)).sub(sellTokenPoolBalance);
     }
 
     function buy(uint investmentAmount, uint outcomeIndex, uint minOutcomeTokensToBuy) external {
