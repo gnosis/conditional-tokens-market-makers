@@ -8,8 +8,18 @@ import { CTHelpers } from "@gnosis.pm/conditional-tokens-contracts/contracts/CTH
 import { ERC1155TokenReceiver } from "@gnosis.pm/conditional-tokens-contracts/contracts/ERC1155/ERC1155TokenReceiver.sol";
 
 
+library CeilDiv {
+    // calculates ceil(x/y)
+    function ceildiv(uint x, uint y) internal pure returns (uint) {
+        if(x > 0) return ((x - 1) / y) + 1;
+        return x / y;
+    }
+}
+
+
 contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     using SafeMath for uint;
+    using CeilDiv for uint;
 
     uint constant ONE = 10**18;
 
@@ -219,21 +229,19 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
         uint investmentAmountMinusFees = investmentAmount.sub(investmentAmount.mul(fee) / ONE);
-        uint balancesProduct = 1;
-        uint denom = 1;
-        uint buyTokenPoolBalance;
+        uint buyTokenPoolBalance = poolBalances[outcomeIndex];
+        uint endingOutcomeBalance = buyTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
-            uint poolBalance = poolBalances[i];
-            balancesProduct = balancesProduct.mul(poolBalance);
-            if(i == outcomeIndex)
-                buyTokenPoolBalance = poolBalance;
-            else
-                denom = denom.mul(poolBalance.add(investmentAmountMinusFees));
+            if(i != outcomeIndex) {
+                uint poolBalance = poolBalances[i];
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance).ceildiv(
+                    poolBalance.add(investmentAmountMinusFees)
+                );
+            }
         }
-        require(balancesProduct > 0, "must have non-zero balances");
-        require(denom > 0, "must end up with valid denominator");
+        require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return buyTokenPoolBalance.add(investmentAmount).sub(balancesProduct / denom);
+        return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance.ceildiv(ONE));
     }
 
     function calcSellAmount(uint returnAmount, uint outcomeIndex) public view returns (uint outcomeTokenSellAmount) {
@@ -241,21 +249,19 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
         uint returnAmountPlusFees = returnAmount.add(returnAmount.mul(fee) / ONE);
-        uint balancesProduct = 1;
-        uint denom = 1;
-        uint sellTokenPoolBalance;
+        uint sellTokenPoolBalance = poolBalances[outcomeIndex];
+        uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
-            uint poolBalance = poolBalances[i];
-            balancesProduct = balancesProduct.mul(poolBalance);
-            if(i == outcomeIndex)
-                sellTokenPoolBalance = poolBalance;
-            else
-                denom = denom.mul(poolBalance.sub(returnAmountPlusFees));
+            if(i != outcomeIndex) {
+                uint poolBalance = poolBalances[i];
+                endingOutcomeBalance = endingOutcomeBalance.mul(poolBalance).ceildiv(
+                    poolBalance.sub(returnAmountPlusFees)
+                );
+            }
         }
-        require(balancesProduct > 0, "must have non-zero balances");
-        require(denom > 0, "must end up with valid denominator");
+        require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return returnAmount.add(balancesProduct / denom).sub(sellTokenPoolBalance);
+        return returnAmount.add(endingOutcomeBalance.ceildiv(ONE)).sub(sellTokenPoolBalance);
     }
 
     function buy(uint investmentAmount, uint outcomeIndex, uint minOutcomeTokensToBuy) external {

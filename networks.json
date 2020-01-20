@@ -640,8 +640,8 @@
         }
       },
       "links": {},
-      "address": "0x17227353c2782A361ec65DCe27d05830Df41D3D3",
-      "transactionHash": "0x595863911ab384561d91c479b791ace3cfe2eccfa680f1c0495fc0c99d5679dd"
+      "address": "0x89F54625565792729fd3Fa5F689c46e7612b4E8b",
+      "transactionHash": "0x32c0d5cb1f30eb032119fb00e1f66cbc420a2bc195b46a319937de6e31899bf5"
     },
     "4": {
       "events": {
@@ -703,8 +703,8 @@
         }
       },
       "links": {},
-      "address": "0x578138C6211913c3fb23BfB8a7C9D220882d1a50",
-      "transactionHash": "0xf499ac6aa698249c42833dc6ee6edbe1305174503162a96baf8f7c2cfa791e19"
+      "address": "0x17227353c2782A361ec65DCe27d05830Df41D3D3",
+      "transactionHash": "0x65f692df10d90054632bbb44fad481ae6a4260555e714701d41552a71d716263"
     }
   },
   "Fixed192x64Math": {
@@ -782,8 +782,8 @@
         }
       },
       "links": {},
-      "address": "0x2E8C4eC3fE9E3FC78FAE42af9c93A4DC88c38cb7",
-      "transactionHash": "0x1d0184f8db88aaf698bf1e2da7384cb59a2f6a10370434ed521114a47ebd8b86"
+      "address": "0xD2CFB87B6b24e290f4E1043d4fff5118ce568241",
+      "transactionHash": "0x67dbe812401812ea4e884435a3390c3ecb5ed940fc5177ddfa05d5b8cf7ea3f4"
     },
     "4": {
       "events": {
@@ -845,8 +845,8 @@
         }
       },
       "links": {},
-      "address": "0x05ca4A640B610db5d708dfFF5C983dbC6b673bc6",
-      "transactionHash": "0xdee05b636b470d1b64c2e9c3ba288c379cf6569ecad9d4e081697321bb476e5c"
+      "address": "0xAC25b79f1DfD5Ec2f32E8200047582cb4d9F6175",
+      "transactionHash": "0x2bca446d65a2f8839e059e123a1c55b1da2baceb33a41a04aba7336867fb5e2a"
     }
   },
   "LMSRMarketMakerFactory": {

@@ -9,7 +9,7 @@ const FixedProductMarketMaker = artifacts.require('FixedProductMarketMaker')
 
 contract('FPMMDeterministicFactory', function([, creator, oracle, trader, investor2]) {
     const questionId = randomHex(32)
-    const numOutcomes = 4
+    const numOutcomes = 10
     const conditionId = getConditionId(oracle, questionId, numOutcomes)
     const collectionIds = Array.from(
         { length: numOutcomes },
@@ -31,8 +31,8 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
     const saltNonce = toBN(2020)
     const feeFactor = toBN(3e15) // (0.3%)
     const initialFunds = toBN(10e18)
-    const initialDistribution = [1, 2, 1, 1]
-    const expectedFundedAmounts = [toBN(5e18), toBN(10e18), toBN(5e18), toBN(5e18)]
+    const initialDistribution = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    const expectedFundedAmounts = initialDistribution.map(n => toBN(1e18 * n))
 
     step('can be created and funded by factory', async function() {
         await collateralToken.deposit({ value: initialFunds, from: creator });
