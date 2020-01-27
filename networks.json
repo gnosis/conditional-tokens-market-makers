@@ -637,11 +637,113 @@
           "name": "CloneCreated",
           "type": "event",
           "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        },
+        "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsAdded",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesMinted",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingAdded",
+          "type": "event",
+          "signature": "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951"
+        },
+        "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsRemoved",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesBurnt",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingRemoved",
+          "type": "event",
+          "signature": "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1"
+        },
+        "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "investmentAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensBought",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMBuy",
+          "type": "event",
+          "signature": "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4"
+        },
+        "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "returnAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensSold",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMSell",
+          "type": "event",
+          "signature": "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e"
         }
       },
       "links": {},
-      "address": "0x89F54625565792729fd3Fa5F689c46e7612b4E8b",
-      "transactionHash": "0x32c0d5cb1f30eb032119fb00e1f66cbc420a2bc195b46a319937de6e31899bf5"
+      "address": "0xe7E502789B8f4cDC99e6Cf9d3963E8C76784da51",
+      "transactionHash": "0x1004ff3fa9d251d7eed9608c7e062f939265ed1f58a69ea7758678456c091309"
     },
     "4": {
       "events": {
@@ -700,11 +802,113 @@
           "name": "CloneCreated",
           "type": "event",
           "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        },
+        "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsAdded",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesMinted",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingAdded",
+          "type": "event",
+          "signature": "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951"
+        },
+        "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsRemoved",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesBurnt",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingRemoved",
+          "type": "event",
+          "signature": "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1"
+        },
+        "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "investmentAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensBought",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMBuy",
+          "type": "event",
+          "signature": "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4"
+        },
+        "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "returnAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensSold",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMSell",
+          "type": "event",
+          "signature": "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e"
         }
       },
       "links": {},
-      "address": "0x17227353c2782A361ec65DCe27d05830Df41D3D3",
-      "transactionHash": "0x65f692df10d90054632bbb44fad481ae6a4260555e714701d41552a71d716263"
+      "address": "0x89F54625565792729fd3Fa5F689c46e7612b4E8b",
+      "transactionHash": "0xc4ef0150420db3ee3c2ee5875cacf3af71d05fcf962023415d1a2339f890909f"
     }
   },
   "Fixed192x64Math": {
@@ -738,12 +942,12 @@
               "type": "address"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "name": "conditionalTokens",
               "type": "address"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "name": "collateralToken",
               "type": "address"
             },
@@ -779,11 +983,113 @@
           "name": "CloneCreated",
           "type": "event",
           "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        },
+        "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsAdded",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesMinted",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingAdded",
+          "type": "event",
+          "signature": "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951"
+        },
+        "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsRemoved",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesBurnt",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingRemoved",
+          "type": "event",
+          "signature": "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1"
+        },
+        "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "investmentAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensBought",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMBuy",
+          "type": "event",
+          "signature": "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4"
+        },
+        "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "returnAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensSold",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMSell",
+          "type": "event",
+          "signature": "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e"
         }
       },
       "links": {},
-      "address": "0xD2CFB87B6b24e290f4E1043d4fff5118ce568241",
-      "transactionHash": "0x67dbe812401812ea4e884435a3390c3ecb5ed940fc5177ddfa05d5b8cf7ea3f4"
+      "address": "0xE635d6D02E3b1b33133047263121448aaf8FC8b6",
+      "transactionHash": "0x4ba993099f2daccdb6b131cba90af0a883538f812af194c4082f613790b11651"
     },
     "4": {
       "events": {
@@ -801,12 +1107,12 @@
               "type": "address"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "name": "conditionalTokens",
               "type": "address"
             },
             {
-              "indexed": false,
+              "indexed": true,
               "name": "collateralToken",
               "type": "address"
             },
@@ -842,11 +1148,113 @@
           "name": "CloneCreated",
           "type": "event",
           "signature": "0x3d2b821286d97aa9d35330d87a82f7b548b9737b10e2d1ba59994edfd50e9d2b"
+        },
+        "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsAdded",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesMinted",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingAdded",
+          "type": "event",
+          "signature": "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951"
+        },
+        "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "funder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amountsRemoved",
+              "type": "uint256[]"
+            },
+            {
+              "indexed": false,
+              "name": "sharesBurnt",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMFundingRemoved",
+          "type": "event",
+          "signature": "0x8baabc14b3d9f411b07b5a4c14fc6e12f2bc261be2d89da0840d48243ab056e1"
+        },
+        "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "investmentAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensBought",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMBuy",
+          "type": "event",
+          "signature": "0xf4be957977a10be6a30d662255828df028f4b18f21d6774140bdc96c2bf300a4"
+        },
+        "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "returnAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "outcomeIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "outcomeTokensSold",
+              "type": "uint256"
+            }
+          ],
+          "name": "FPMMSell",
+          "type": "event",
+          "signature": "0x728a7aff2d166d753c6a40a36be24a55f33ada4ffc2f81d62f40d0bef007d84e"
         }
       },
       "links": {},
-      "address": "0xAC25b79f1DfD5Ec2f32E8200047582cb4d9F6175",
-      "transactionHash": "0x2bca446d65a2f8839e059e123a1c55b1da2baceb33a41a04aba7336867fb5e2a"
+      "address": "0xD2CFB87B6b24e290f4E1043d4fff5118ce568241",
+      "transactionHash": "0xcd95e9bace6cab0ef9c3efe2fa263b7cd867c165b377797603ea33be5f8d447c"
     }
   },
   "LMSRMarketMakerFactory": {

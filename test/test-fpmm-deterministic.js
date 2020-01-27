@@ -103,6 +103,12 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             fee: feeFactor,
         });
 
+        expectEvent.inLogs(createTx.logs, 'FPMMFundingAdded', {
+            funder: fpmmDeterministicFactory.address,
+            // amountsAdded: expectedFundedAmounts,
+            sharesMinted: initialFunds,
+        });
+
         fixedProductMarketMaker = await FixedProductMarketMaker.at(fixedProductMarketMakerAddress);
 
         (await collateralToken.balanceOf(creator)).should.be.a.bignumber.equal("0");
@@ -125,7 +131,13 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
 
         const outcomeTokensToBuy = await fixedProductMarketMaker.calcBuyAmount(investmentAmount, buyOutcomeIndex);
 
-        await fixedProductMarketMaker.buy(investmentAmount, buyOutcomeIndex, outcomeTokensToBuy, { from: trader });
+        const buyTx = await fixedProductMarketMaker.buy(investmentAmount, buyOutcomeIndex, outcomeTokensToBuy, { from: trader });
+        expectEvent.inLogs(buyTx.logs, 'FPMMBuy', {
+            buyer: trader,
+            investmentAmount,
+            outcomeIndex: toBN(buyOutcomeIndex),
+            outcomeTokensBought: outcomeTokensToBuy,
+        });
 
         (await collateralToken.balanceOf(trader)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(trader)).should.be.a.bignumber.equal("0");
@@ -155,7 +167,13 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
 
         const outcomeTokensToSell = await fixedProductMarketMaker.calcSellAmount(returnAmount, sellOutcomeIndex);
 
-        await fixedProductMarketMaker.sell(returnAmount, sellOutcomeIndex, outcomeTokensToSell, { from: trader });
+        const sellTx = await fixedProductMarketMaker.sell(returnAmount, sellOutcomeIndex, outcomeTokensToSell, { from: trader });
+        expectEvent.inLogs(sellTx.logs, 'FPMMSell', {
+            seller: trader,
+            returnAmount,
+            outcomeIndex: toBN(sellOutcomeIndex),
+            outcomeTokensSold: outcomeTokensToSell,
+        });
 
         (await collateralToken.balanceOf(trader)).should.be.a.bignumber.equal(returnAmount);
         (await fixedProductMarketMaker.balanceOf(trader)).should.be.a.bignumber.equal("0");
@@ -177,7 +195,12 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
     step('can continue being funded', async function() {
         await collateralToken.deposit({ value: addedFunds2, from: investor2 });
         await collateralToken.approve(fixedProductMarketMaker.address, addedFunds2, { from: investor2 });
-        await fixedProductMarketMaker.addFunding(addedFunds2, [], { from: investor2 });
+        const addFundingTx = await fixedProductMarketMaker.addFunding(addedFunds2, [], { from: investor2 });
+        expectEvent.inLogs(addFundingTx.logs, 'FPMMFundingAdded', {
+            funder: investor2,
+            // amountsAdded,
+            // sharesMinted,
+        });
 
         (await collateralToken.balanceOf(investor2)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(investor2)).should.be.a.bignumber.gt("0");
@@ -194,7 +217,12 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
 
     const burnedShares1 = toBN(5e18)
     step('can be defunded', async function() {
-        await fixedProductMarketMaker.removeFunding(burnedShares1, { from: creator });
+        const removeFundingTx = await fixedProductMarketMaker.removeFunding(burnedShares1, { from: creator });
+        expectEvent.inLogs(removeFundingTx.logs, 'FPMMFundingRemoved', {
+            funder: creator,
+            // amountsRemoved,
+            sharesBurnt: burnedShares1,
+        });
 
         (await collateralToken.balanceOf(creator)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(creator)).should.be.a.bignumber.equal(initialFunds.sub(burnedShares1));
