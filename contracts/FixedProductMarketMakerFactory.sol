@@ -17,6 +17,28 @@ contract FixedProductMarketMakerData {
     mapping(bytes4 => bool) internal _supportedInterfaces;
 
 
+    event FPMMFundingAdded(
+        address indexed funder,
+        uint[] amountsAdded,
+        uint sharesMinted
+    );
+    event FPMMFundingRemoved(
+        address indexed funder,
+        uint[] amountsRemoved,
+        uint sharesBurnt
+    );
+    event FPMMBuy(
+        address indexed buyer,
+        uint investmentAmount,
+        uint indexed outcomeIndex,
+        uint outcomeTokensBought
+    );
+    event FPMMSell(
+        address indexed seller,
+        uint returnAmount,
+        uint indexed outcomeIndex,
+        uint outcomeTokensSold
+    );
     ConditionalTokens internal conditionalTokens;
     IERC20 internal collateralToken;
     bytes32[] internal conditionIds;
@@ -31,8 +53,8 @@ contract FixedProductMarketMakerFactory is ConstructedCloneFactory, FixedProduct
     event FixedProductMarketMakerCreation(
         address indexed creator,
         FixedProductMarketMaker fixedProductMarketMaker,
-        ConditionalTokens conditionalTokens,
-        IERC20 collateralToken,
+        ConditionalTokens indexed conditionalTokens,
+        IERC20 indexed collateralToken,
         bytes32[] conditionIds,
         uint fee
     );
