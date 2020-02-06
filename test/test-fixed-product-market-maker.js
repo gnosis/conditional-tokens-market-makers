@@ -53,12 +53,25 @@ contract('FixedProductMarketMaker', function([, creator, oracle, investor1, trad
     })
 
     const addedFunds1 = toBN(10e18)
-    const initialDistribution = new Array(16).fill([1, 2, 1, 1]).flat()
-    const expectedFundedAmounts = new Array(16).fill([toBN(5e18), toBN(10e18), toBN(5e18), toBN(5e18)]).flat()
+    const initialDistribution = []
+    const expectedFundedAmounts = new Array(64).fill(addedFunds1)
     step('can be funded', async function() {
         await collateralToken.deposit({ value: addedFunds1, from: investor1 });
         await collateralToken.approve(fixedProductMarketMaker.address, addedFunds1, { from: investor1 });
-        await fixedProductMarketMaker.addFunding(addedFunds1, initialDistribution, { from: investor1 });
+        const fundingTx = await fixedProductMarketMaker.addFunding(addedFunds1, initialDistribution, { from: investor1 });
+
+        expectEvent.inLogs(fundingTx.logs, 'FPMMFundingAdded', {
+            funder: investor1,
+            // amountsAdded: expectedFundedAmounts,
+            sharesMinted: addedFunds1,
+        });
+        const { amountsAdded } = fundingTx.logs.find(
+            ({ event }) => event === 'FPMMFundingAdded'
+        ).args;
+        amountsAdded.should.have.lengthOf(expectedFundedAmounts.length);
+        for (let i = 0; i < amountsAdded.length; i++) {
+            amountsAdded[i].should.be.a.bignumber.equal(expectedFundedAmounts[i]);
+        }
 
         (await collateralToken.balanceOf(investor1)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(investor1)).should.be.a.bignumber.equal(addedFunds1);

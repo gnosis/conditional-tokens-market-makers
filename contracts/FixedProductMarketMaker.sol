@@ -152,7 +152,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(collateralToken.approve(address(conditionalTokens), addedFunds), "approval for splits failed");
         splitPositionThroughAllConditions(addedFunds);
 
-        uint[] memory sendBackAmounts = new uint[](0);
+        uint[] memory sendBackAmounts = new uint[](positionIds.length);
         uint poolShareSupply = totalSupply();
         uint mintAmount;
         if(poolShareSupply > 0) {
@@ -165,8 +165,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                 if(maxBalance < balance)
                     maxBalance = balance;
             }
-
-            sendBackAmounts = new uint[](poolBalances.length);
 
             for(uint i = 0; i < poolBalances.length; i++) {
                 uint remaining = addedFunds.mul(poolBalances[i]) / maxBalance;
@@ -184,8 +182,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                         maxHint = hint;
                 }
 
-                sendBackAmounts = new uint[](distributionHint.length);
-
                 for(uint i = 0; i < distributionHint.length; i++) {
                     uint remaining = addedFunds.mul(distributionHint[i]) / maxHint;
                     require(remaining > 0, "must hint a valid distribution");
@@ -197,8 +193,8 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
 
         _mint(msg.sender, mintAmount);
-        if(sendBackAmounts.length == positionIds.length)
-            conditionalTokens.safeBatchTransferFrom(address(this), msg.sender, positionIds, sendBackAmounts, "");
+
+        conditionalTokens.safeBatchTransferFrom(address(this), msg.sender, positionIds, sendBackAmounts, "");
 
         // transform sendBackAmounts to array of amounts added
         for (uint i = 0; i < sendBackAmounts.length; i++) {
