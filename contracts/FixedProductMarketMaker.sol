@@ -171,7 +171,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                 sendBackAmounts[i] = addedFunds.sub(remaining);
             }
 
-            mintAmount = addedFunds.mul(maxBalance) / poolShareSupply;
+            mintAmount = addedFunds.mul(poolShareSupply) / maxBalance;
         } else {
             if(distributionHint.length > 0) {
                 require(distributionHint.length == positionIds.length, "hint length off");
