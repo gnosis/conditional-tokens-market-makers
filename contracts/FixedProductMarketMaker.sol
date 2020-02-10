@@ -148,9 +148,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         external
     {
         require(addedFunds > 0, "funding must be non-zero");
-        require(collateralToken.transferFrom(msg.sender, address(this), addedFunds), "funding transfer failed");
-        require(collateralToken.approve(address(conditionalTokens), addedFunds), "approval for splits failed");
-        splitPositionThroughAllConditions(addedFunds);
 
         uint[] memory sendBackAmounts = new uint[](positionIds.length);
         uint poolShareSupply = totalSupply();
@@ -171,7 +168,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                 sendBackAmounts[i] = addedFunds.sub(remaining);
             }
 
-            mintAmount = addedFunds.mul(maxBalance) / poolShareSupply;
+            mintAmount = addedFunds.mul(poolShareSupply) / maxBalance;
         } else {
             if(distributionHint.length > 0) {
                 require(distributionHint.length == positionIds.length, "hint length off");
@@ -191,6 +188,10 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
             mintAmount = addedFunds;
         }
+
+        require(collateralToken.transferFrom(msg.sender, address(this), addedFunds), "funding transfer failed");
+        require(collateralToken.approve(address(conditionalTokens), addedFunds), "approval for splits failed");
+        splitPositionThroughAllConditions(addedFunds);
 
         _mint(msg.sender, mintAmount);
 

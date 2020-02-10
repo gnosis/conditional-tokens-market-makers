@@ -193,13 +193,20 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
 
     const addedFunds2 = toBN(5e18)
     step('can continue being funded', async function() {
+        const currentPoolBalances = await conditionalTokens.balanceOfBatch(
+            new Array(positionIds.length).fill(fixedProductMarketMaker.address),
+            positionIds
+        );
+        const maxPoolBalance = currentPoolBalances.reduce((a, b) => a.gt(b) ? a : b);
+        const currentPoolShareSupply = await fixedProductMarketMaker.totalSupply();
+
         await collateralToken.deposit({ value: addedFunds2, from: investor2 });
         await collateralToken.approve(fixedProductMarketMaker.address, addedFunds2, { from: investor2 });
         const addFundingTx = await fixedProductMarketMaker.addFunding(addedFunds2, [], { from: investor2 });
         expectEvent.inLogs(addFundingTx.logs, 'FPMMFundingAdded', {
             funder: investor2,
             // amountsAdded,
-            // sharesMinted,
+            sharesMinted: currentPoolShareSupply.mul(addedFunds2).div(maxPoolBalance),
         });
 
         (await collateralToken.balanceOf(investor2)).should.be.a.bignumber.equal("0");
