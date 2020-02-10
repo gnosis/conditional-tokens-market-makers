@@ -907,8 +907,8 @@
         }
       },
       "links": {},
-      "address": "0x89F54625565792729fd3Fa5F689c46e7612b4E8b",
-      "transactionHash": "0xc4ef0150420db3ee3c2ee5875cacf3af71d05fcf962023415d1a2339f890909f"
+      "address": "0xe7E502789B8f4cDC99e6Cf9d3963E8C76784da51",
+      "transactionHash": "0x65e83b59b56e71f82028628a14f09da2e05e14c7415ce5e67ddeeb8d0fde20c7"
     }
   },
   "Fixed192x64Math": {
@@ -1253,8 +1253,8 @@
         }
       },
       "links": {},
-      "address": "0xD2CFB87B6b24e290f4E1043d4fff5118ce568241",
-      "transactionHash": "0xcd95e9bace6cab0ef9c3efe2fa263b7cd867c165b377797603ea33be5f8d447c"
+      "address": "0xE635d6D02E3b1b33133047263121448aaf8FC8b6",
+      "transactionHash": "0xcd96c76b4b21d74b2bee1b0ff7dae33cb1916c53e6fc88d3cdde2279acffa533"
     }
   },
   "LMSRMarketMakerFactory": {
