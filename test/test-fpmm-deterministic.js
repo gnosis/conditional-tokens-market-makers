@@ -133,6 +133,11 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         const outcomeTokensToBuy = await fixedProductMarketMaker.calcBuyAmount(investmentAmount, buyOutcomeIndex);
         const feeAmount = investmentAmount.mul(feeFactor).div(toBN(1e18));
 
+        const poolProductBefore = (await conditionalTokens.balanceOfBatch(
+            Array.from(positionIds, () => fixedProductMarketMaker.address),
+            positionIds,
+        )).reduce((a, b) => a.mul(b), toBN(1));
+
         const buyTx = await fixedProductMarketMaker.buy(investmentAmount, buyOutcomeIndex, outcomeTokensToBuy, { from: trader });
         expectEvent.inLogs(buyTx.logs, 'FPMMBuy', {
             buyer: trader,
@@ -142,6 +147,14 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             outcomeTokensBought: outcomeTokensToBuy,
         });
 
+        const poolProductAfter = (await conditionalTokens.balanceOfBatch(
+            Array.from(positionIds, () => fixedProductMarketMaker.address),
+            positionIds,
+        )).reduce((a, b) => a.mul(b), toBN(1));
+
+        poolProductAfter.sub(poolProductBefore)
+            .should.be.a.bignumber.gte("0")
+            .and.be.a.bignumber.lte(poolProductBefore.div(toBN(1e18)));
         (await collateralToken.balanceOf(trader)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(trader)).should.be.a.bignumber.equal("0");
         (await collateralToken.balanceOf(fixedProductMarketMaker.address)).should.be.a.bignumber.equal(feeAmount);
@@ -174,6 +187,11 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
 
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
 
+        const poolProductBefore = (await conditionalTokens.balanceOfBatch(
+            Array.from(positionIds, () => fixedProductMarketMaker.address),
+            positionIds,
+        )).reduce((a, b) => a.mul(b), toBN(1));
+
         const sellTx = await fixedProductMarketMaker.sell(returnAmount, sellOutcomeIndex, outcomeTokensToSell, { from: trader });
         expectEvent.inLogs(sellTx.logs, 'FPMMSell', {
             seller: trader,
@@ -183,6 +201,14 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             outcomeTokensSold: outcomeTokensToSell,
         });
 
+        const poolProductAfter = (await conditionalTokens.balanceOfBatch(
+            Array.from(positionIds, () => fixedProductMarketMaker.address),
+            positionIds,
+        )).reduce((a, b) => a.mul(b), toBN(1));
+
+        poolProductAfter.sub(poolProductBefore)
+            .should.be.a.bignumber.gte("0")
+            .and.be.a.bignumber.lte(poolProductBefore.div(toBN(1e18)));
         (await collateralToken.balanceOf(trader)).should.be.a.bignumber.equal(returnAmount);
         (await fixedProductMarketMaker.balanceOf(trader)).should.be.a.bignumber.equal("0");
 
