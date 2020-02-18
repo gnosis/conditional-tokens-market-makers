@@ -297,7 +297,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(outcomeIndex < positionIds.length, "invalid outcome index");
 
         uint[] memory poolBalances = getPoolBalances();
-        uint returnAmountPlusFees = returnAmount.add(returnAmount.mul(fee) / ONE);
+        uint returnAmountPlusFees = returnAmount.mul(ONE) / ONE.sub(fee);
         uint sellTokenPoolBalance = poolBalances[outcomeIndex];
         uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
@@ -335,7 +335,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         conditionalTokens.safeTransferFrom(msg.sender, address(this), positionIds[outcomeIndex], outcomeTokensToSell, "");
 
-        uint feeAmount = returnAmount.mul(fee) / ONE;
+        uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
         uint returnAmountPlusFees = returnAmount.add(feeAmount);
         mergePositionsThroughAllConditions(returnAmountPlusFees);
 

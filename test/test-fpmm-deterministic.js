@@ -183,7 +183,7 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         await conditionalTokens.setApprovalForAll(fixedProductMarketMaker.address, true, { from: trader });
 
         const outcomeTokensToSell = await fixedProductMarketMaker.calcSellAmount(returnAmount, sellOutcomeIndex);
-        const feeAmount = returnAmount.mul(feeFactor).div(toBN(1e18));
+        const feeAmount = returnAmount.mul(feeFactor).div(toBN(1e18).sub(feeFactor));
 
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
 

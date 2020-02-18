@@ -123,7 +123,7 @@ contract('FixedProductMarketMaker', function([, creator, oracle, investor1, trad
         const sellOutcomeIndex = 1;
         await conditionalTokens.setApprovalForAll(fixedProductMarketMaker.address, true, { from: trader });
 
-        const feeAmount = returnAmount.mul(feeFactor).div(toBN(1e18));
+        const feeAmount = returnAmount.mul(feeFactor).div(toBN(1e18).sub(feeFactor));
 
         const outcomeTokensToSell = await fixedProductMarketMaker.calcSellAmount(returnAmount, sellOutcomeIndex);
 
