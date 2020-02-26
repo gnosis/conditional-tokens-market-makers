@@ -21,22 +21,26 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     event FPMMFundingAdded(
         address indexed funder,
         uint[] amountsAdded,
+        uint collateralAddedToFeePool,
         uint sharesMinted
     );
     event FPMMFundingRemoved(
         address indexed funder,
         uint[] amountsRemoved,
+        uint collateralRemovedFromFeePool,
         uint sharesBurnt
     );
     event FPMMBuy(
         address indexed buyer,
         uint investmentAmount,
+        uint feeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensBought
     );
     event FPMMSell(
         address indexed seller,
         uint returnAmount,
+        uint feeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensSold
     );
@@ -150,25 +154,30 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(addedFunds > 0, "funding must be non-zero");
 
         uint[] memory sendBackAmounts = new uint[](positionIds.length);
+        uint collateralAddedToFeePool;
         uint poolShareSupply = totalSupply();
         uint mintAmount;
         if(poolShareSupply > 0) {
             require(distributionHint.length == 0, "cannot use distribution hint after initial funding");
             uint[] memory poolBalances = getPoolBalances();
-
-            uint maxBalance = 0;
+            uint poolWeight = 0;
             for(uint i = 0; i < poolBalances.length; i++) {
                 uint balance = poolBalances[i];
-                if(maxBalance < balance)
-                    maxBalance = balance;
+                if(poolWeight < balance)
+                    poolWeight = balance;
             }
+
+            uint collectedFees = collateralToken.balanceOf(address(this));
+            poolWeight = poolWeight.add(collectedFees);
+
+            collateralAddedToFeePool = addedFunds.mul(collectedFees) / poolWeight;
 
             for(uint i = 0; i < poolBalances.length; i++) {
-                uint remaining = addedFunds.mul(poolBalances[i]) / maxBalance;
-                sendBackAmounts[i] = addedFunds.sub(remaining);
+                uint remaining = addedFunds.mul(poolBalances[i]) / poolWeight;
+                sendBackAmounts[i] = addedFunds.sub(collateralAddedToFeePool).sub(remaining);
             }
 
-            mintAmount = addedFunds.mul(poolShareSupply) / maxBalance;
+            mintAmount = addedFunds.mul(poolShareSupply) / poolWeight;
         } else {
             if(distributionHint.length > 0) {
                 require(distributionHint.length == positionIds.length, "hint length off");
@@ -190,8 +199,10 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
 
         require(collateralToken.transferFrom(msg.sender, address(this), addedFunds), "funding transfer failed");
-        require(collateralToken.approve(address(conditionalTokens), addedFunds), "approval for splits failed");
-        splitPositionThroughAllConditions(addedFunds);
+
+        uint collateralToSplit = addedFunds.sub(collateralAddedToFeePool);
+        require(collateralToken.approve(address(conditionalTokens), collateralToSplit), "approval for splits failed");
+        splitPositionThroughAllConditions(collateralToSplit);
 
         _mint(msg.sender, mintAmount);
 
@@ -202,7 +213,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             sendBackAmounts[i] = addedFunds.sub(sendBackAmounts[i]);
         }
 
-        emit FPMMFundingAdded(msg.sender, sendBackAmounts, mintAmount);
+        emit FPMMFundingAdded(msg.sender, sendBackAmounts, collateralAddedToFeePool, mintAmount);
     }
 
     function removeFunding(uint sharesToBurn)
@@ -217,10 +228,17 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             sendAmounts[i] = poolBalances[i].mul(sharesToBurn) / poolShareSupply;
         }
 
+        uint collectedFees = collateralToken.balanceOf(address(this));
+        uint collateralRemovedFromFeePool = collectedFees.mul(sharesToBurn) / poolShareSupply;
+
         _burn(msg.sender, sharesToBurn);
+        require(
+            collateralToken.transfer(msg.sender, collateralRemovedFromFeePool),
+            "could not send share of collected fees to funder"
+        );
         conditionalTokens.safeBatchTransferFrom(address(this), msg.sender, positionIds, sendAmounts, "");
 
-        emit FPMMFundingRemoved(msg.sender, sendAmounts, sharesToBurn);
+        emit FPMMFundingRemoved(msg.sender, sendAmounts, collateralRemovedFromFeePool, sharesToBurn);
     }
 
     function onERC1155Received(
@@ -272,14 +290,14 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
         require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return buyTokenPoolBalance.add(investmentAmount).sub(endingOutcomeBalance.ceildiv(ONE));
+        return buyTokenPoolBalance.add(investmentAmountMinusFees).sub(endingOutcomeBalance.ceildiv(ONE));
     }
 
     function calcSellAmount(uint returnAmount, uint outcomeIndex) public view returns (uint outcomeTokenSellAmount) {
         require(outcomeIndex < positionIds.length, "invalid outcome index");
 
         uint[] memory poolBalances = getPoolBalances();
-        uint returnAmountPlusFees = returnAmount.add(returnAmount.mul(fee) / ONE);
+        uint returnAmountPlusFees = returnAmount.mul(ONE) / ONE.sub(fee);
         uint sellTokenPoolBalance = poolBalances[outcomeIndex];
         uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
         for(uint i = 0; i < poolBalances.length; i++) {
@@ -292,7 +310,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
         require(endingOutcomeBalance > 0, "must have non-zero balances");
 
-        return returnAmount.add(endingOutcomeBalance.ceildiv(ONE)).sub(sellTokenPoolBalance);
+        return returnAmountPlusFees.add(endingOutcomeBalance.ceildiv(ONE)).sub(sellTokenPoolBalance);
     }
 
     function buy(uint investmentAmount, uint outcomeIndex, uint minOutcomeTokensToBuy) external {
@@ -300,11 +318,15 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(outcomeTokensToBuy >= minOutcomeTokensToBuy, "minimum buy amount not reached");
 
         require(collateralToken.transferFrom(msg.sender, address(this), investmentAmount), "cost transfer failed");
-        require(collateralToken.approve(address(conditionalTokens), investmentAmount), "approval for splits failed");
-        splitPositionThroughAllConditions(investmentAmount);
+
+        uint feeAmount = investmentAmount.mul(fee) / ONE;
+        uint investmentAmountMinusFees = investmentAmount.sub(feeAmount);
+        require(collateralToken.approve(address(conditionalTokens), investmentAmountMinusFees), "approval for splits failed");
+        splitPositionThroughAllConditions(investmentAmountMinusFees);
+
         conditionalTokens.safeTransferFrom(address(this), msg.sender, positionIds[outcomeIndex], outcomeTokensToBuy, "");
 
-        emit FPMMBuy(msg.sender, investmentAmount, outcomeIndex, outcomeTokensToBuy);
+        emit FPMMBuy(msg.sender, investmentAmount, feeAmount, outcomeIndex, outcomeTokensToBuy);
     }
 
     function sell(uint returnAmount, uint outcomeIndex, uint maxOutcomeTokensToSell) external {
@@ -312,9 +334,13 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(outcomeTokensToSell <= maxOutcomeTokensToSell, "maximum sell amount exceeded");
 
         conditionalTokens.safeTransferFrom(msg.sender, address(this), positionIds[outcomeIndex], outcomeTokensToSell, "");
-        mergePositionsThroughAllConditions(returnAmount);
+
+        uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
+        uint returnAmountPlusFees = returnAmount.add(feeAmount);
+        mergePositionsThroughAllConditions(returnAmountPlusFees);
+
         require(collateralToken.transfer(msg.sender, returnAmount), "return transfer failed");
 
-        emit FPMMSell(msg.sender, returnAmount, outcomeIndex, outcomeTokensToSell);
+        emit FPMMSell(msg.sender, returnAmount, feeAmount, outcomeIndex, outcomeTokensToSell);
     }
 }

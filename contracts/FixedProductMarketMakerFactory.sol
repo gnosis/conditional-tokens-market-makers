@@ -20,22 +20,26 @@ contract FixedProductMarketMakerData {
     event FPMMFundingAdded(
         address indexed funder,
         uint[] amountsAdded,
+        uint collateralAddedToFeePool,
         uint sharesMinted
     );
     event FPMMFundingRemoved(
         address indexed funder,
         uint[] amountsRemoved,
+        uint collateralRemovedFromFeePool,
         uint sharesBurnt
     );
     event FPMMBuy(
         address indexed buyer,
         uint investmentAmount,
+        uint feeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensBought
     );
     event FPMMSell(
         address indexed seller,
         uint returnAmount,
+        uint feeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensSold
     );
