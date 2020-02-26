@@ -211,12 +211,41 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         }
     })
 
+    let postManipulationCreatorPoolShares;
+    step('cannot manipulate fee pool ratio by removing funding down to 1 wei', async function() {
+        const manipulationAmount = initialFunds.subn(1);
+        const collateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const collectedFeesBefore = await fixedProductMarketMaker.collectedFees();
+
+        await fixedProductMarketMaker.removeFunding(manipulationAmount, { from: creator });
+        await collateralToken.deposit({ from: creator, value: manipulationAmount });
+        await collateralToken.approve(
+            fixedProductMarketMaker.address,
+            manipulationAmount,
+            { from: creator }
+        );
+        await fixedProductMarketMaker.addFunding(manipulationAmount, [], { from: creator });
+
+        // (await collateralToken.balanceOf(fixedProductMarketMaker.address))
+        //     .should.be.a.bignumber.equal(collateralBalanceBefore);
+        // (await fixedProductMarketMaker.collectedFees())
+        //     .should.be.a.bignumber.equal(collectedFeesBefore);
+
+        marketMakerPool = await conditionalTokens.balanceOfBatch(
+            new Array(positionIds.length).fill(fixedProductMarketMaker.address),
+            positionIds,
+        )
+        postManipulationCreatorPoolShares = await fixedProductMarketMaker.balanceOf(creator);
+    });
+
     step('can sell tokens to it', async function() {
-        const returnAmount = toBN(5e17)
+        const returnAmount = toBN(1e17)
         const sellOutcomeIndex = 1;
         await conditionalTokens.setApprovalForAll(fixedProductMarketMaker.address, true, { from: trader });
 
         const outcomeTokensToSell = await fixedProductMarketMaker.calcSellAmount(returnAmount, sellOutcomeIndex);
+        (await conditionalTokens.balanceOf(trader, positionIds[sellOutcomeIndex]))
+            .should.be.a.bignumber.gte(outcomeTokensToSell);
         const feeAmount = returnAmount.mul(feeFactor).div(toBN(1e18).sub(feeFactor));
 
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
@@ -302,11 +331,14 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         }
     });
 
-    const burnedShares1 = toBN(5e18)
+    const burnedShares1 = toBN(1e18)
     step('can be defunded', async function() {
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const creatorCollateralBalanceBefore = await collateralToken.balanceOf(creator);
+        const shareSupplyBefore = await fixedProductMarketMaker.totalSupply();
         const removeFundingTx = await fixedProductMarketMaker.removeFunding(burnedShares1, { from: creator });
         const fpmmCollateralBalanceAfter = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const creatorCollateralBalanceAfter = await collateralToken.balanceOf(creator);
 
         const collateralRemovedFromFeePool = fpmmCollateralBalanceBefore.sub(fpmmCollateralBalanceAfter);
 
@@ -317,19 +349,22 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             collateralRemovedFromFeePool,
         });
 
-        (await collateralToken.balanceOf(creator)).should.be.a.bignumber.equal(collateralRemovedFromFeePool);
-        (await fixedProductMarketMaker.balanceOf(creator)).should.be.a.bignumber.equal(initialFunds.sub(burnedShares1));
+        creatorCollateralBalanceAfter.sub(creatorCollateralBalanceBefore)
+            .should.be.a.bignumber.equal(collateralRemovedFromFeePool);
+        (await fixedProductMarketMaker.balanceOf(creator)).should.be.a.bignumber.equal(postManipulationCreatorPoolShares.sub(burnedShares1));
 
         for(let i = 0; i < positionIds.length; i++) {
-            let newMarketMakerBalance = await conditionalTokens.balanceOf(fixedProductMarketMaker.address, positionIds[i])
-            newMarketMakerBalance.should.be.a.bignumber.lt(marketMakerPool[i]);
-            (await conditionalTokens.balanceOf(creator, positionIds[i]))
-                .should.be.a.bignumber.equal(
-                    initialFunds
-                        .sub(expectedFundedAmounts[i])
-                        .add(marketMakerPool[i])
-                        .sub(newMarketMakerBalance)
-                );
+            let newMarketMakerBalance = await conditionalTokens.balanceOf(
+                fixedProductMarketMaker.address,
+                positionIds[i],
+            )
+            newMarketMakerBalance.should.be.a.bignumber.equal(
+                marketMakerPool[i].sub(
+                    marketMakerPool[i]
+                        .mul(burnedShares1)
+                        .div(shareSupplyBefore)
+                )
+            );
 
             marketMakerPool[i] = newMarketMakerBalance;
         }
