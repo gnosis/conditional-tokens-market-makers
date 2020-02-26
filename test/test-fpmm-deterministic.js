@@ -7,7 +7,7 @@ const WETH9 = artifacts.require('WETH9')
 const FPMMDeterministicFactory = artifacts.require('FPMMDeterministicFactory')
 const FixedProductMarketMaker = artifacts.require('FixedProductMarketMaker')
 
-contract('FPMMDeterministicFactory', function([, creator, oracle, trader, investor2]) {
+contract('FPMMDeterministicFactory', function([, creator, oracle, trader, investor2, testInvestor]) {
     const questionId = randomHex(32)
     const numOutcomes = 10
     const conditionId = getConditionId(oracle, questionId, numOutcomes)
@@ -123,6 +123,40 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         }
     });
 
+    const feePoolManipulationAmount = toBN(30e18);
+    const testAdditionalFunding = toBN(1e18);
+    const expectedTestEndingAmounts = initialDistribution.map(n => toBN(1.1e18 * n))
+    step('cannot set fee pool proportion directly with transfer', async function() {
+        await collateralToken.deposit({
+            from: creator,
+            value: feePoolManipulationAmount,
+        });
+        await collateralToken.transfer(
+            fixedProductMarketMaker.address,
+            feePoolManipulationAmount,
+            { from: creator },
+        );
+
+        await collateralToken.deposit({ value: testAdditionalFunding, from: testInvestor });
+        await collateralToken.approve(fixedProductMarketMaker.address, testAdditionalFunding, { from: testInvestor });
+        await fixedProductMarketMaker.addFunding(testAdditionalFunding, [], { from: testInvestor });
+
+        for(let i = 0; i < positionIds.length; i++) {
+            (await conditionalTokens.balanceOf(fixedProductMarketMaker.address, positionIds[i]))
+                .should.be.a.bignumber.equal(expectedTestEndingAmounts[i]);
+            (await conditionalTokens.balanceOf(testInvestor, positionIds[i]))
+                .should.be.a.bignumber.equal(
+                    testAdditionalFunding
+                        .add(expectedFundedAmounts[i])
+                        .sub(expectedTestEndingAmounts[i])
+                );
+        }
+
+        (await fixedProductMarketMaker.balanceOf(testInvestor)).should.be.a.bignumber.equal(testAdditionalFunding);
+
+        await fixedProductMarketMaker.removeFunding(testAdditionalFunding, { from: testInvestor });
+    });
+
     let marketMakerPool;
     step('can buy tokens from it', async function() {
         const investmentAmount = toBN(1e18)
@@ -157,7 +191,7 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             .and.be.a.bignumber.lte(poolProductBefore.div(toBN(1e18)));
         (await collateralToken.balanceOf(trader)).should.be.a.bignumber.equal("0");
         (await fixedProductMarketMaker.balanceOf(trader)).should.be.a.bignumber.equal("0");
-        (await collateralToken.balanceOf(fixedProductMarketMaker.address)).should.be.a.bignumber.equal(feeAmount);
+        (await collateralToken.balanceOf(fixedProductMarketMaker.address)).should.be.a.bignumber.equal(feePoolManipulationAmount.add(feeAmount));
 
         marketMakerPool = []
         for(let i = 0; i < positionIds.length; i++) {
@@ -241,6 +275,7 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         await collateralToken.deposit({ value: addedFunds2, from: investor2 });
         await collateralToken.approve(fixedProductMarketMaker.address, addedFunds2, { from: investor2 });
 
+        const collectedFees = await fixedProductMarketMaker.collectedFees();
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
         const addFundingTx = await fixedProductMarketMaker.addFunding(addedFunds2, [], { from: investor2 });
         const fpmmCollateralBalanceAfter = await collateralToken.balanceOf(fixedProductMarketMaker.address);
@@ -249,7 +284,7 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
             funder: investor2,
             // amountsAdded,
             sharesMinted: currentPoolShareSupply.mul(addedFunds2).div(
-                maxPoolBalance.add(fpmmCollateralBalanceBefore)
+                maxPoolBalance.add(collectedFees)
             ),
             collateralAddedToFeePool: fpmmCollateralBalanceAfter.sub(fpmmCollateralBalanceBefore),
         });    

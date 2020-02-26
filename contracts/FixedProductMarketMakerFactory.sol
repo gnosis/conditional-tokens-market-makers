@@ -47,6 +47,7 @@ contract FixedProductMarketMakerData {
     IERC20 internal collateralToken;
     bytes32[] internal conditionIds;
     uint internal fee;
+    uint internal collectedFees;
 
     uint[] internal outcomeSlotCounts;
     bytes32[][] internal collectionIds;

@@ -54,6 +54,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     IERC20 public collateralToken;
     bytes32[] public conditionIds;
     uint public fee;
+    uint public collectedFees;
 
     uint[] outcomeSlotCounts;
     bytes32[][] collectionIds;
@@ -167,7 +168,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                     poolWeight = balance;
             }
 
-            uint collectedFees = collateralToken.balanceOf(address(this));
             poolWeight = poolWeight.add(collectedFees);
 
             collateralAddedToFeePool = addedFunds.mul(collectedFees) / poolWeight;
@@ -199,7 +199,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
 
         require(collateralToken.transferFrom(msg.sender, address(this), addedFunds), "funding transfer failed");
-
+        collectedFees = collectedFees.add(collateralAddedToFeePool);
         uint collateralToSplit = addedFunds.sub(collateralAddedToFeePool);
         require(collateralToken.approve(address(conditionalTokens), collateralToSplit), "approval for splits failed");
         splitPositionThroughAllConditions(collateralToSplit);
@@ -228,7 +228,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             sendAmounts[i] = poolBalances[i].mul(sharesToBurn) / poolShareSupply;
         }
 
-        uint collectedFees = collateralToken.balanceOf(address(this));
         uint collateralRemovedFromFeePool = collectedFees.mul(sharesToBurn) / poolShareSupply;
 
         _burn(msg.sender, sharesToBurn);
@@ -236,6 +235,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             collateralToken.transfer(msg.sender, collateralRemovedFromFeePool),
             "could not send share of collected fees to funder"
         );
+        collectedFees = collectedFees.sub(collateralRemovedFromFeePool);
         conditionalTokens.safeBatchTransferFrom(address(this), msg.sender, positionIds, sendAmounts, "");
 
         emit FPMMFundingRemoved(msg.sender, sendAmounts, collateralRemovedFromFeePool, sharesToBurn);
@@ -320,6 +320,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(collateralToken.transferFrom(msg.sender, address(this), investmentAmount), "cost transfer failed");
 
         uint feeAmount = investmentAmount.mul(fee) / ONE;
+        collectedFees = collectedFees.add(feeAmount);
         uint investmentAmountMinusFees = investmentAmount.sub(feeAmount);
         require(collateralToken.approve(address(conditionalTokens), investmentAmountMinusFees), "approval for splits failed");
         splitPositionThroughAllConditions(investmentAmountMinusFees);
@@ -336,6 +337,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         conditionalTokens.safeTransferFrom(msg.sender, address(this), positionIds[outcomeIndex], outcomeTokensToSell, "");
 
         uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
+        collectedFees = collectedFees.add(feeAmount);
         uint returnAmountPlusFees = returnAmount.add(feeAmount);
         mergePositionsThroughAllConditions(returnAmountPlusFees);
 
