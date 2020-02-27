@@ -209,10 +209,27 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
                 .should.be.a.bignumber.equal(newMarketMakerBalance);
             marketMakerPool[i] = newMarketMakerBalance
         }
-    })
+    });
+
+    step('cannot leech wei by adding and removing funding', async function() {
+        const collateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const collectedFeesBefore = await fixedProductMarketMaker.collectedFees();
+        
+        await collateralToken.deposit({ value: testAdditionalFunding, from: testInvestor });
+        await collateralToken.approve(fixedProductMarketMaker.address, testAdditionalFunding, { from: testInvestor });
+        await fixedProductMarketMaker.addFunding(testAdditionalFunding, [], { from: testInvestor });
+        const testSharesMinted = await fixedProductMarketMaker.balanceOf(testInvestor);
+        await fixedProductMarketMaker.removeFunding(testSharesMinted, { from: testInvestor });
+
+        const collateralBalanceAfter = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const collectedFeesAfter = await fixedProductMarketMaker.collectedFees();
+
+        collateralBalanceBefore.should.be.a.bignumber.equal(collateralBalanceAfter);
+        collectedFeesBefore.should.be.a.bignumber.equal(collectedFeesAfter);
+    });
 
     let postManipulationCreatorPoolShares;
-    step('cannot manipulate fee pool ratio by removing funding down to 1 wei', async function() {
+    step('cannot raise fee pool ratio by removing funding down to 1 wei', async function() {
         const manipulationAmount = initialFunds.subn(1);
         const collateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
         const collectedFeesBefore = await fixedProductMarketMaker.collectedFees();
@@ -226,10 +243,10 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         );
         await fixedProductMarketMaker.addFunding(manipulationAmount, [], { from: creator });
 
-        // (await collateralToken.balanceOf(fixedProductMarketMaker.address))
-        //     .should.be.a.bignumber.equal(collateralBalanceBefore);
-        // (await fixedProductMarketMaker.collectedFees())
-        //     .should.be.a.bignumber.equal(collectedFeesBefore);
+        (await collateralToken.balanceOf(fixedProductMarketMaker.address))
+            .should.be.a.bignumber.lte(collateralBalanceBefore);
+        (await fixedProductMarketMaker.collectedFees())
+            .should.be.a.bignumber.lte(collectedFeesBefore);
 
         marketMakerPool = await conditionalTokens.balanceOfBatch(
             new Array(positionIds.length).fill(fixedProductMarketMaker.address),

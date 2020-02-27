@@ -170,7 +170,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
             poolWeight = poolWeight.add(collectedFees);
 
-            collateralAddedToFeePool = addedFunds.mul(collectedFees) / poolWeight;
+            collateralAddedToFeePool = addedFunds.mul(collectedFees).ceildiv(poolWeight);
 
             for(uint i = 0; i < poolBalances.length; i++) {
                 uint remaining = addedFunds.mul(poolBalances[i]) / poolWeight;
@@ -228,7 +228,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             sendAmounts[i] = poolBalances[i].mul(sharesToBurn) / poolShareSupply;
         }
 
-        uint collateralRemovedFromFeePool = collectedFees.mul(sharesToBurn) / poolShareSupply;
+        uint collateralRemovedFromFeePool = collectedFees.mul(sharesToBurn).ceildiv(poolShareSupply);
 
         _burn(msg.sender, sharesToBurn);
         require(
