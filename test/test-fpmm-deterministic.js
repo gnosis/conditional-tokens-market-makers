@@ -106,7 +106,6 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         expectEvent.inLogs(createTx.logs, 'FPMMFundingAdded', {
             funder: fpmmDeterministicFactory.address,
             // amountsAdded: expectedFundedAmounts,
-            collateralAddedToFeePool: "0",
             sharesMinted: initialFunds,
         });
 
@@ -321,18 +320,18 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         await collateralToken.deposit({ value: addedFunds2, from: investor2 });
         await collateralToken.approve(fixedProductMarketMaker.address, addedFunds2, { from: investor2 });
 
-        const collectedFees = await fixedProductMarketMaker.collectedFees();
-        const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const collectedFeesBefore = await fixedProductMarketMaker.collectedFees();
         const addFundingTx = await fixedProductMarketMaker.addFunding(addedFunds2, [], { from: investor2 });
-        const fpmmCollateralBalanceAfter = await collateralToken.balanceOf(fixedProductMarketMaker.address);
+        const collectedFeesAfter = await fixedProductMarketMaker.collectedFees();
+
+        collectedFeesBefore.should.be.a.bignumber.equal(collectedFeesAfter);
 
         expectEvent.inLogs(addFundingTx.logs, 'FPMMFundingAdded', {
             funder: investor2,
             // amountsAdded,
             sharesMinted: currentPoolShareSupply.mul(addedFunds2).div(
-                maxPoolBalance.add(collectedFees)
+                maxPoolBalance
             ),
-            collateralAddedToFeePool: fpmmCollateralBalanceAfter.sub(fpmmCollateralBalanceBefore),
         });    
         
         (await collateralToken.balanceOf(investor2)).should.be.a.bignumber.equal("0");
@@ -353,9 +352,11 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         const fpmmCollateralBalanceBefore = await collateralToken.balanceOf(fixedProductMarketMaker.address);
         const creatorCollateralBalanceBefore = await collateralToken.balanceOf(creator);
         const shareSupplyBefore = await fixedProductMarketMaker.totalSupply();
+        const feesWithdrawableByCreatorBefore = await fixedProductMarketMaker.feesWithdrawableBy(creator);
         const removeFundingTx = await fixedProductMarketMaker.removeFunding(burnedShares1, { from: creator });
         const fpmmCollateralBalanceAfter = await collateralToken.balanceOf(fixedProductMarketMaker.address);
         const creatorCollateralBalanceAfter = await collateralToken.balanceOf(creator);
+        const feesWithdrawableByCreatorAfter = await fixedProductMarketMaker.feesWithdrawableBy(creator);
 
         const collateralRemovedFromFeePool = fpmmCollateralBalanceBefore.sub(fpmmCollateralBalanceAfter);
 
@@ -367,7 +368,10 @@ contract('FPMMDeterministicFactory', function([, creator, oracle, trader, invest
         });
 
         creatorCollateralBalanceAfter.sub(creatorCollateralBalanceBefore)
-            .should.be.a.bignumber.equal(collateralRemovedFromFeePool);
+            .should.be.a.bignumber.equal(collateralRemovedFromFeePool)
+            .and.be.a.bignumber.equal(
+                feesWithdrawableByCreatorBefore.sub(feesWithdrawableByCreatorAfter)
+            );
         (await fixedProductMarketMaker.balanceOf(creator)).should.be.a.bignumber.equal(postManipulationCreatorPoolShares.sub(burnedShares1));
 
         for(let i = 0; i < positionIds.length; i++) {

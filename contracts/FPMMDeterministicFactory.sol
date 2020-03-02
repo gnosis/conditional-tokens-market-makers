@@ -20,7 +20,6 @@ contract FixedProductMarketMakerData {
     event FPMMFundingAdded(
         address indexed funder,
         uint[] amountsAdded,
-        uint collateralAddedToFeePool,
         uint sharesMinted
     );
     event FPMMFundingRemoved(
@@ -52,6 +51,8 @@ contract FixedProductMarketMakerData {
     uint[] internal outcomeSlotCounts;
     bytes32[][] internal collectionIds;
     uint[] internal positionIds;
+    mapping (address => uint256) internal withdrawnFees;
+    uint internal totalWithdrawnFees;
 }
 
 contract FPMMDeterministicFactory is Create2CloneFactory, FixedProductMarketMakerData, ERC1155TokenReceiver {
