@@ -111,50 +111,37 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         return rawAmount.sub(withdrawnFees[account]);
     }
 
-    function withdrawFees() public {
-        uint rawAmount = feePoolWeight.mul(balanceOf(msg.sender)) / totalSupply();
-        uint withdrawableAmount = rawAmount.sub(withdrawnFees[msg.sender]);
-        if(withdrawableAmount > 0) {
-            withdrawnFees[msg.sender] = rawAmount;
-            require(
-                collateralToken.transfer(msg.sender, withdrawableAmount),
-                "withdrawal transfer failed"
-            );
+    function withdrawFees(address account) public {
+        uint rawAmount = feePoolWeight.mul(balanceOf(account)) / totalSupply();
+        uint withdrawableAmount = rawAmount.sub(withdrawnFees[account]);
+        if(withdrawableAmount > 0){
+            withdrawnFees[account] = rawAmount;
+            totalWithdrawnFees = totalWithdrawnFees.add(withdrawableAmount);
+            require(collateralToken.transfer(account, withdrawableAmount), "withdrawal transfer failed");
         }
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
-        if (from != address(0) && to != address(0)) {
-            // transfer
-            uint senderWithdrawnFees = withdrawnFees[from];
-            uint withdrawnFeesTransfer = senderWithdrawnFees.mul(amount) / balanceOf(from);
-            withdrawnFees[from] = senderWithdrawnFees.sub(withdrawnFeesTransfer);
-            withdrawnFees[to] = withdrawnFees[to].add(withdrawnFeesTransfer);
-        } else if (from == address(0)) {
-            // mint
-            require(to != address(0), "weird transfer from 0 to 0");
-            uint poolSupply = totalSupply();
-            if(poolSupply > 0) {
-                uint newWithdrawnFees = feePoolWeight.mul(amount) / poolSupply;
-                feePoolWeight = feePoolWeight.add(newWithdrawnFees);
-                withdrawnFees[to] = withdrawnFees[to].add(newWithdrawnFees);
-                totalWithdrawnFees = totalWithdrawnFees.add(newWithdrawnFees);
-            }
+        if (from != address(0)) {
+            withdrawFees(from);
+        }
+
+        uint totalSupply = totalSupply();
+        uint withdrawnFeesTransfer = totalSupply == 0 ?
+            amount :
+            feePoolWeight.mul(amount) / totalSupply;
+
+        if (from != address(0)) {
+            withdrawnFees[from] = withdrawnFees[from].sub(withdrawnFeesTransfer);
+            totalWithdrawnFees = totalWithdrawnFees.sub(withdrawnFeesTransfer);
         } else {
-            // burn
-            uint burnerWithdrawnFees = withdrawnFees[from];
-            uint burntWithdrawnFees = burnerWithdrawnFees.mul(amount) / balanceOf(from);
-            uint rawAmount = (feePoolWeight.mul(amount) / totalSupply());
-            require(
-                collateralToken.transfer(
-                    from,
-                    rawAmount.sub(burntWithdrawnFees)
-                ),
-                "burn-triggered withdrawal failed"
-            );
-            feePoolWeight = feePoolWeight.sub(rawAmount);
-            withdrawnFees[from] = burnerWithdrawnFees.sub(burntWithdrawnFees);
-            totalWithdrawnFees = totalWithdrawnFees.sub(burntWithdrawnFees);
+            feePoolWeight = feePoolWeight.add(withdrawnFeesTransfer);
+        }
+        if (to != address(0)) {
+            withdrawnFees[to] = withdrawnFees[to].add(withdrawnFeesTransfer);
+            totalWithdrawnFees = totalWithdrawnFees.add(withdrawnFeesTransfer);
+        } else {
+            feePoolWeight = feePoolWeight.sub(withdrawnFeesTransfer);
         }
     }
 
