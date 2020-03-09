@@ -124,30 +124,37 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
-        uint withdrawnFeesTransfer;
-
-        if(from != address(0)) {
-            withdrawnFeesTransfer = withdrawnFees[from].mul(amount) / balanceOf(from);
-            withdrawnFees[from] = withdrawnFees[from].sub(withdrawnFeesTransfer);
-            totalWithdrawnFees = totalWithdrawnFees.sub(withdrawnFeesTransfer);
-        } else {
+        if (from != address(0) && to != address(0)) {
+            // transfer
+            uint senderWithdrawnFees = withdrawnFees[from];
+            uint withdrawnFeesTransfer = senderWithdrawnFees.mul(amount) / balanceOf(from);
+            withdrawnFees[from] = senderWithdrawnFees.sub(withdrawnFeesTransfer);
+            withdrawnFees[to] = withdrawnFees[to].add(withdrawnFeesTransfer);
+        } else if (from == address(0)) {
+            // mint
+            require(to != address(0), "weird transfer from 0 to 0");
             uint poolSupply = totalSupply();
             if(poolSupply > 0) {
-                withdrawnFeesTransfer = feePoolWeight.mul(amount) / poolSupply;
-                feePoolWeight = feePoolWeight.add(withdrawnFeesTransfer);
+                uint newWithdrawnFees = feePoolWeight.mul(amount) / poolSupply;
+                feePoolWeight = feePoolWeight.add(newWithdrawnFees);
+                withdrawnFees[to] = withdrawnFees[to].add(newWithdrawnFees);
+                totalWithdrawnFees = totalWithdrawnFees.add(newWithdrawnFees);
             }
-        }
-
-        if(to != address(0)) {
-            withdrawnFees[to] = withdrawnFees[to].add(withdrawnFeesTransfer);
-            totalWithdrawnFees = totalWithdrawnFees.add(withdrawnFeesTransfer);
         } else {
+            // burn
+            uint burnerWithdrawnFees = withdrawnFees[from];
+            uint burntWithdrawnFees = burnerWithdrawnFees.mul(amount) / balanceOf(from);
             uint rawAmount = (feePoolWeight.mul(amount) / totalSupply());
             require(
-                collateralToken.transfer(from, rawAmount.sub(withdrawnFeesTransfer)),
+                collateralToken.transfer(
+                    from,
+                    rawAmount.sub(burntWithdrawnFees)
+                ),
                 "burn-triggered withdrawal failed"
             );
             feePoolWeight = feePoolWeight.sub(rawAmount);
+            withdrawnFees[from] = burnerWithdrawnFees.sub(burntWithdrawnFees);
+            totalWithdrawnFees = totalWithdrawnFees.sub(burntWithdrawnFees);
         }
     }
 
