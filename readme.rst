@@ -9,7 +9,7 @@ Automated Market Makers for the Prediction Markets 2.0 (Conditional Tokens) plat
 
 `→ Online Documentation`_
 
-.. _→ Online Documentation: https://conditional-tokens.readthedocs.io/en/latest/
+.. _→ Online Documentation: https://docs.gnosis.io/conditionaltokens/
 .. _Gnosis: https://gnosis.io
 
 
