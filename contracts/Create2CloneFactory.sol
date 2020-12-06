@@ -35,6 +35,8 @@ contract Create2CloneFactory {
           result := create2(0, data, len, salt)
         }
         
+        emit CloneCreated(target, result);
+        
         require(result != address(0), "create2 failed");
     }
 }
