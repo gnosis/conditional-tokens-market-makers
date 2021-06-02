@@ -149,6 +149,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
         if (from != address(0)) {
             withdrawFees(from);
+            withdrawRewards(from)
         }
 
         uint totalSupply = totalSupply();
@@ -156,17 +157,29 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             amount :
             feePoolWeight.mul(amount) / totalSupply;
 
+        uint withdrawnRewardsTransfer = totalSupply == 0 ?
+            amount :
+            rewardPoolWeight.mul(amount) / totalSupply;
+
         if (from != address(0)) {
             withdrawnFees[from] = withdrawnFees[from].sub(withdrawnFeesTransfer);
             totalWithdrawnFees = totalWithdrawnFees.sub(withdrawnFeesTransfer);
+
+            withdrawnRewards[from] = withdrawnRewards[from].sub(withdrawnRewardsTransfer);
+            totalWithdrawnRewards = totalWithdrawnRewards.sub(withdrawnRewardsTransfer);
         } else {
             feePoolWeight = feePoolWeight.add(withdrawnFeesTransfer);
+            rewardPoolWeight = rewardPoolWeight.add(withdrawnRewardsTransfer);
         }
         if (to != address(0)) {
             withdrawnFees[to] = withdrawnFees[to].add(withdrawnFeesTransfer);
             totalWithdrawnFees = totalWithdrawnFees.add(withdrawnFeesTransfer);
+
+            withdrawnRewards[to] = withdrawnRewards[to].add(withdrawnRewardsTransfer);
+            totalWithdrawnRewards = totalWithdrawnRewards.add(withdrawnRewardsTransfer);
         } else {
             feePoolWeight = feePoolWeight.sub(withdrawnFeesTransfer);
+            rewardPoolWeight = rewardPoolWeight.sub(withdrawnRewardsTransfer);
         }
     }
 
