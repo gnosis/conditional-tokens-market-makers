@@ -127,6 +127,25 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         }
     }
 
+    function collectedRewards() external view returns (uint) {
+        return rewardPoolWeight.sub(totalWithdrawnRewards);
+    }
+
+    function rewardsWithdrawableBy(address account) public view returns (uint) {
+        uint rawAmount = rewardPoolWeight.mul(balanceOf(account)) / totalSupply();
+        return rawAmount.sub(withdrawnRewards[account]);
+    }
+
+    function withdrawRewards(address account) public {
+        uint rawAmount = rewardPoolWeight.mul(balanceOf(account)) / totalSupply();
+        uint withdrawableAmount = rawAmount.sub(withdrawnRewards[account]);
+        if(withdrawableAmount > 0){
+            withdrawnRewards[account] = rawAmount;
+            totalWithdrawnRewards = totalWithdrawnRewards.add(withdrawableAmount);
+            require(rewardToken.transfer(account, withdrawableAmount), "withdrawal transfer failed");
+        }
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
         if (from != address(0)) {
             withdrawFees(from);
