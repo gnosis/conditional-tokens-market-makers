@@ -49,6 +49,9 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
     uint constant ONE = 10**18;
 
+    // TODO: Replace hardcoded reward token
+    address rewardToken = '0xa8b4b1dc4efc8f8c48e430a4faaaf36075670139';
+
     ConditionalTokens public conditionalTokens;
     IERC20 public collateralToken;
     bytes32[] public conditionIds;
